@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="">
+  <meta name="generator" content="Hugo 0.17" />
+
+  <title>Linux--multiple routing tables &middot; zxdvd&#39;s notes</title>
+
+  
+  
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/pure/0.6.0/pure-min.css">
+
+  <!--[if lte IE 8]>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/pure/0.6.0/grids-responsive-old-ie-min.css">
+  <![endif]-->
+  <!--[if gt IE 8]><!-->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/pure/0.6.0/grids-responsive-min.css">
+  <!--<![endif]-->
+
+  <!--[if lte IE 8]>
+  <link rel="stylesheet" href="/css/side-menu-old-ie.css">
+  <![endif]-->
+  <!--[if gt IE 8]><!-->
+  <link rel="stylesheet" href="/css/side-menu.css">
+  <!--<![endif]-->
+
+  <link rel="stylesheet" href="/css/blackburn.css">
+
+  
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css">
+
+  
+  
+
+  
+  
+
+  
+
+  <link rel="shortcut icon" href="https://zxdvd.github.ioimg/favicon.ico" type="image/x-icon" />
+
+  
+  
+
+</head>
+
+
+<body>
+<div id="layout">
+
+  
+<a href="#menu" id="menuLink" class="menu-link">
+  
+  <span></span>
+</a>
+<div id="menu">
+
+  
+  <a class="pure-menu-heading brand" href="/">zxdvd</a>
+
+
+  <div class="pure-menu">
+    <ul class="pure-menu-list">
+      
+      
+        <li class="pure-menu-item">
+          <a class="pure-menu-link" href="/"><i class='fa fa-home fa-fw'></i>Home</a>
+      
+        </li>
+      
+      
+        <li class="pure-menu-item">
+          <a class="pure-menu-link" href="/post/"><i class='fa fa-list fa-fw'></i>Posts</a>
+      
+        </li>
+      
+      
+        <li class="pure-menu-item">
+          <a class="pure-menu-link" href="/topics/"><i class='fa fa-folder fa-fw'></i>Topics</a>
+      
+        </li>
+      
+      
+        <li class="pure-menu-item">
+          <a class="pure-menu-link" href="/tags/"><i class='fa fa-tags fa-fw'></i>Tags</a>
+      
+        </li>
+      
+    </ul>
+  </div>
+
+  <div class="pure-menu social">
+  <ul class="pure-menu-list">
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <li class="pure-menu-item">
+      <a class="pure-menu-link" href="https://github.com/zxdvd" target="_blank"><i class="fa fa-github-square fa-fw"></i>GitHub</a>
+    </li>
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+  </ul>
+</div>
+
+
+  <div>
+  <div class="small-print">
+    <small></small>
+  </div>
+  <div class="small-print">
+    <small>Built with&nbsp;<a href="https://gohugo.io/" target="_blank">Hugo</a></small>
+    <small>Theme&nbsp;<a href="https://github.com/yoshiharuyamashita/blackburn" target="_blank">Blackburn</a></small>
+  </div>
+</div>
+
+</div>
+
+
+  <div id="main">
+
+
+<div class="header">
+  <h1>Linux--multiple routing tables</h1>
+  <h2></h2>
+</div>
+<div class="content">
+
+  <div class="post-meta">
+
+  <div>
+    <i class="fa fa-calendar fa-fw"></i>
+    <time>30 Oct 2014, 00:00</time>
+  </div>
+
+  
+
+  
+
+  
+  
+  
+  <div>
+    <i class="fa fa-tags fa-fw"></i>
+    
+      <a class="post-taxonomy-tag" href="https://zxdvd.github.iotags/linux">linux</a>&nbsp;&#47;
+    
+      <a class="post-taxonomy-tag" href="https://zxdvd.github.iotags/network">network</a>
+    
+  </div>
+  
+  
+
+</div>
+
+  <p>Several months ago, my colleague got a problem that some of his virtual
+machines. I dug into this problem and finally solved it.</p>
+
+<p>Following is the network topology =</p>
+
+<p><img src="/images/post/network-topo-mult-routes.jpg" alt="network topology" /></p>
+
+<p>It has following problems =<br />
+The br2 and vnet5 and vnet6 can only communicate with subnet 192.168.2.0/24,
+they cannot send or receive packages from other subnets.</p>
+
+<p>Explanation =<br />
+Because there is only route to 192.168.2.0/24 for the br2. Let&rsquo;s try to analyze
+it through a ping process. If you ping 192.168.2.7 (br2) from a machine outside
+of this subnet, like 192.168.1.10, below is the detailed routing path =<br />
+src to dst = 192.168.1.10 checks the destination and finds it&rsquo;s in another subnet
+so send it to the default gateway.</p>
+
+<pre><code>192.168.1.10  --&gt;  to gateway 192.168.1.254   OK
+192.168.1.254 --&gt;  forward to 192.168.2.254   OK
+192.168.2.254 --&gt;  forward to 192.168.2.7     OK
+</code></pre>
+
+<p>dst to src = Also 192.168.2.7 would send to default gateway, but let&rsquo;s check the
+default gateway of the machine. It&rsquo;s <code>default via 192.168.1.254 dev br1</code>, so it
+fails to send the package since the br1 interface won&rsquo;t send a package whose
+source ip address is not bounded to itself.</p>
+
+<p>Now we knows that the br2 can receive packages but fail to send them to other
+subnets. So how to? Add another default gateway? A machine can only have one
+default gateway.</p>
+
+<p></p>
+
+<h3 id="routing-tables">Routing tables</h3>
+
+<p>It&rsquo;s time to get something about the routing tables. For the linux, you can have
+routing tables for 0 to 255. And you can set rules of each table, e.g. let the
+br1 follows the table 10 and the br2 follows the table 20, with this, our
+problem could be tackled perfectly.</p>
+
+<p>All routing tables are listed in file <code>/etc/iproute2/rt_tables</code>, you can see
+tables local, main, default there, main is the default table when you do all
+kinds of add/delete.<br />
+To check items in a table, using <code>#ip route show table TABLE-ID-or-TABLE-NAME</code></p>
+
+<h3 id="setup-multiple-routing-tables">Setup multiple routing tables</h3>
+
+<p>From above we know, to solve this problem we need to set up  routing tables for
+both br1 and br2. We can set the br1 to use the main table by default then we
+could only set up another one for the br2.</p>
+
+<ol>
+<li><p><code>#echo 10 table_br2 &gt;&gt; /etc/iproute2/rt_tables</code> to add a table.</p></li>
+
+<li><p><code>#ip route add 192.168.2.0/24 dev br2 src 192.168.2.7 table table_br2</code><br />
+<code>#ip route default via 192.168.2.254 dev br2 table table_br2</code></p></li>
+
+<li><p>After setting up this table, we need to rules to let the packages to know
+which table to select.<br />
+<code>#ip rule add from 192.168.2.7 table table_br2</code><br />
+This rule tells all packages whose source address is 192.168.2.7 to follow
+the table_br2.<br />
+<code>#ip rule add oif br2 table table_br2    //oif=output interface</code></p></li>
+</ol>
+
+<p>Now all the settings are finished. But remember that =</p>
+
+<p><strong>All the <code>ip XXX</code> settings are temporary</strong> which mean that they&rsquo;ll get lost
+   after rebooting. If you want to keep them permanent, you can write them to
+   &ldquo;/etc/init.d/boot.local&rdquo; or use other scripts.</p>
+
+<h4 id="references">References</h4>
+
+<ol>
+<li><p><a href="http =//linux-ip.net/html/routing-tables.html">routing tables</a></p></li>
+
+<li><p><a href="http =//lartc.org/howto/lartc.rpdb.multiple-links.html">routing&ndash;multiple uplinks</a></p></li>
+</ol>
+
+  
+<div class="prev-next-post pure-g">
+  <div class="pure-u-1-24" style="text-align: left;">
+    
+    <a href="https://zxdvd.github.io/post/trans/why-not-sshd-docker/"><i class="fa fa-chevron-left"></i></a>
+    
+  </div>
+  <div class="pure-u-10-24">
+    
+    <nav class="prev">
+      <a href="https://zxdvd.github.io/post/trans/why-not-sshd-docker/">不要在container里使用sshd的n个理由</a>
+    </nav>
+    
+  </div>
+  <div class="pure-u-2-24">
+    &nbsp;
+  </div>
+  <div class="pure-u-10-24">
+    
+    <nav class="next">
+      <a href="https://zxdvd.github.io/post/summary-curl-bugzilla/">Summary: the curl bugzilla project</a>
+    </nav>
+    
+  </div>
+  <div class="pure-u-1-24" style="text-align: right;">
+    
+    <a href="https://zxdvd.github.io/post/summary-curl-bugzilla/"><i class="fa fa-chevron-right"></i></a>
+    
+  </div>
+</div>
+
+
+
+  
+
+</div>
+
+</div>
+</div>
+<script src="https://zxdvd.github.iojs/ui.js"></script>
+
+
+
+
+</body>
+</html>
+

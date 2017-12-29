@@ -1,0 +1,672 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Post-rsses on zxdvd&#39;s notes</title>
+    <link>https://zxdvd.github.io/post/index.xml</link>
+    <description>Recent content in Post-rsses on zxdvd&#39;s notes</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <lastBuildDate>Wed, 20 Dec 2017 00:00:00 +0000</lastBuildDate>
+    <atom:link href="https://zxdvd.github.io/post/index.xml" rel="self" type="application/rss+xml" />
+    
+    <item>
+      <title>代码阅读: redis-rio</title>
+      <link>https://zxdvd.github.io/post/read-code-redis-rio/</link>
+      <pubDate>Wed, 20 Dec 2017 00:00:00 +0000</pubDate>
+      
+      <guid>https://zxdvd.github.io/post/read-code-redis-rio/</guid>
+      <description>
+
+&lt;p&gt;rio.h, rio.c是redis内部对部分io的一个封装，封装之后不管是buffer, 还是file, 还是fdset，
+它们都是rio对象，有统一的write， read等函数，外部调用它们的时候不用关心
+底层细节.
+从这里可以学到c里面怎么来实现面向对象编程，我们会发现面向对象只是一种思想，
+跟语言无关，并不需要class关键词.&lt;/p&gt;
+
+&lt;p&gt;先看rio.h里rio的这个结构的定义(篇幅限制，只copy部分)&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;struct _rio {
+    size_t (*read)(struct _rio *, void *buf, size_t len);
+    size_t (*write)(struct _rio *, const void *buf, size_t len);
+    off_t (*tell)(struct _rio *);
+    int (*flush)(struct _rio *);
+
+    size_t processed_bytes;  /* number of bytes read or written */
+    size_t max_processing_chunk;  /* maximum single read or write chunk size */
+
+    union {
+        struct {
+            sds ptr;
+            off_t pos;
+        } buffer;
+        struct {
+            FILE *fp;
+            off_t buffered; /* Bytes written since last fsync. */
+            off_t autosync; /* fsync after &#39;autosync&#39; bytes written. */
+        } file;
+    } io;
+};
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;首先定义了read, write, tell, flush四种很常见的函数指针，方便后面初始化的
+时候指向对应函数. 而且注意这些函数的参数都是抽象的&lt;code&gt;rio *&lt;/code&gt;.&lt;/p&gt;
+
+&lt;p&gt;union里面有buffer, file, fdset三种io类型，后面其实就是基于这三种类型派生出3个对象.&lt;/p&gt;
+
+&lt;p&gt;rio.h后面的几个函数rioWrite, rioRead, rioTell, rioFlush是rio对象的通用方法，它们是对rio对象的read, write, tell, flush的小程度封装，这里都不用关心底层具体是那种io类型.&lt;/p&gt;
+
+&lt;h3 id=&#34;rio-c&#34;&gt;rio.c&lt;/h3&gt;
+
+&lt;p&gt;首先以buffer为例，定义了rioBufferWrite, rioBufferRead, rioBufferTell, rioBufferFlush
+这些针对buffer的底层write, read, tell, flush实现.
+然后派生出一个rio的buffer示例rioBufferIO, 用上面这些函数初始化rio的函数指针.&lt;/p&gt;
+
+&lt;p&gt;后面的file，fdset都是类似与这样的。&lt;/p&gt;
+
+&lt;p&gt;这样整个定义完了，对外暴露统一的read, write, tell, flush,
+后面的一堆rioWriteBulkXXXX函数就不需要关心底层细节了.&lt;/p&gt;
+
+&lt;p&gt;关于rio.*的部分，代码并不难理解，我们需要好好学习封装和抽象的艺术.&lt;/p&gt;
+
+&lt;h3 id=&#34;reference&#34;&gt;Reference:&lt;/h3&gt;
+
+&lt;ol&gt;
+&lt;li&gt;&lt;a href=&#34;https://github.com/antirez/redis/blob/unstable/src/rio.c&#34;&gt;github: redis&lt;/a&gt;&lt;/li&gt;
+&lt;/ol&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>配置travis自动更新github page</title>
+      <link>https://zxdvd.github.io/post/travis-update-github-page/</link>
+      <pubDate>Sat, 05 Nov 2016 00:00:00 +0000</pubDate>
+      
+      <guid>https://zxdvd.github.io/post/travis-update-github-page/</guid>
+      <description>&lt;p&gt;很久没有更新了，evernote里倒是攒了一堆素材，就是没整理，现在准备抽空更新了。
+之前是用pelican生成网页的，后来有次pelican更新了，把一个组件都弄到一个别的repo了，
+然后每次配置又得多clone几个repo了。正好最近学习go，hugo这种single binary感觉也不错，
+配合travis自动更新都不需要安装什么依赖的，然后就决定迁移过来了。&lt;/p&gt;
+
+&lt;p&gt;travis是一个自动化的编译、打包、测试、部署平台，对开源项目免费，支持n多语言，通过自定义脚本，
+感觉就是送了一个打包测试的服务器，不知道他的盈利模式是什么用的，靠少量付费用户能撑起这么多
+开源项目的免费使用么？&lt;/p&gt;
+
+&lt;p&gt;他的工作流程大致如下:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;push OR pull request to a repo -&amp;gt;
+    github notify this event to travis -&amp;gt;
+        travis clone your code and build according the configuration.
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;/p&gt;
+
+&lt;p&gt;以我的github page为例，首先注册travis账号(可以直接用github Oauth登录注册)，登录后同步账号
+选择需要用travis来build的repo。如果是github账号登录的，我发现它以及给所选的repo添加了webhook了
+(当github收到push，pull request等消息的时候，github可以给webhook里配置的外部服务发送消息
+通知)。&lt;/p&gt;
+
+&lt;p&gt;然后在repo的根目录里添加&lt;code&gt;.travis.yml&lt;/code&gt;文件，travis会根据这个文件的配置来build，比如一个简单
+的hello world&lt;/p&gt;
+install: true
+script:
+    - echo &#34;hello world!&#34;
+
+&lt;p&gt;当把这个文件提交并推送到github后，可以发现travis那边就开始build了，而且在log里可以看到整个
+的build过程，不出意外可以看到打印出的&lt;code&gt;hello world!&lt;/code&gt;。&lt;/p&gt;
+
+&lt;p&gt;如果build的过程需要很多外部工具的支持的话，可以在install里面写，比如&lt;/p&gt;
+before_install:
+    - sudo apt-get install python -y
+install:
+    - pip install -r requirements.txt
+
+&lt;p&gt;其实只要恰当的设置好了language，这个build的container里面就自动包含了这个语言需要的一些基本
+工具，很多时候我们需要安装的可能只是一些pip包或者npm包而已。&lt;/p&gt;
+
+&lt;p&gt;以我的&lt;code&gt;.travis.yml&lt;/code&gt;为例&lt;/p&gt;
+branches:
+  only:
+    - content
+
+install: true
+before_script:
+    - &gt;-
+        echo -e $DEPLOY_KEY &gt; $HOME/gh_key \
+            &amp;&amp; chmod 600 $HOME/gh_key \
+            &amp;&amp; printf &#34;%s\n&#34; \
+                &#34;Host github.com&#34; \
+                &#34;    IdentityFile $HOME/gh_key&#34; \
+                &#34;    LogLevel ERROR&#34; &gt;&gt; $HOME/.ssh/config
+    - git config --global user.email $GH_EMAIL
+    - git config --global user.name $GH_USER
+script:
+    - &gt;-
+        ./bin/hugo_linux --theme=blackburn \
+            &amp;&amp; cd public \
+            &amp;&amp; git init \
+            &amp;&amp; git remote add origin git@github.com:zxdvd/zxdvd.github.io.git \
+            &amp;&amp; git add --all \
+            &amp;&amp; git commit -m &#39;update pages via travis&#39; \
+            &amp;&amp; git push -f origin master
+
+&lt;ol&gt;
+&lt;li&gt;&lt;p&gt;通过branch设置可以选择只build那些branch或不build那些branch，我的博客原文在content分支，
+所有只需要build content分支就可以。&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;因为我把hugo的可执行文件也放进repo了，所有我不需要安装任何依赖，直接设置&lt;code&gt;install: true&lt;/code&gt;.&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;before_script里是设置github的deploy key以及用户名配置&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;script里是hugo生成静态文件以及push到master分支的设置。&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;整个配置中用到了3个环境变量(DEPLOY_KEY, GH_USER, GH_EMAIL)，是在travis的网页端设置的，
+通过环境变量可以把一些不能直接写到&lt;code&gt;.travis.yml&lt;/code&gt;的东西(比如密码，sshkey)隐藏起来。&lt;/p&gt;&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;在上面的配置中最后面有一个git push的动作，可以理解为部署，不管是部署到github的某个分支还是部署到
+私人的服务器，都是需要认证的，显然认证需要的密码，秘钥是不能直接写在配置文件里的，这些都应该通过
+环境变量的方式传递。使用这种方式的时候，建议关闭travis的&lt;code&gt;pull request&lt;/code&gt;build的功能(别人提了
+一个pull request，travis自动build下看能不能通过单元测试)，因为恶意攻击者可以篡改&lt;code&gt;.travis.yml&lt;/code&gt;
+文件轻易的窃取环境变量。&lt;/p&gt;
+
+&lt;p&gt;在上面的配置中，我使用的是repo deploy key的方式认证，github支持密码、Personal access tokens、
+ssh key等多种方式认证，前两种权限太高，对全部repo都有效，而deploy key每个repo都可以设置一个或者
+多个，很适合travis部署的情况。&lt;/p&gt;
+
+&lt;p&gt;使用步骤:
+1. 生成ssh key
+  &amp;gt;ssh-keygen -f github_page_deploy_key
+2. 将&lt;code&gt;github_page_deploy_key.pub&lt;/code&gt;文件内容复制到需要部署的github repo的deploy key里
+3. 将&lt;code&gt;github_page_deploy_key&lt;/code&gt;(这个是私钥)添加到travis的ENV里&lt;/p&gt;
+
+&lt;ol&gt;
+&lt;li&gt;不要直接&lt;code&gt;cat github_page_deploy_key&lt;/code&gt;，这样会丢失私钥中的换行符，可以这样获取
+&amp;gt;python -c &amp;lsquo;print(repr(open(&amp;ldquo;github_page_deploy_key&amp;rdquo;).read()))&amp;rsquo;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;在travis里添加环境变量，需要自己加引号，我试了很多次才发现，所有上面的key不能少了前后的引号&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;before_script里写好一个ssh config就可以了，需要注意的是将上面的变量里的字符串恢复到文件需要使用
+&lt;code&gt;echo -e&lt;/code&gt;将\n转义。&lt;/p&gt;&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;至此，整个搭建过程都完成了，以后只管写markdown文档，推送后travis会自动帮忙build整个网站并且自动部署啦。&lt;/p&gt;
+
+&lt;p&gt;##＃ Reference:&lt;/p&gt;
+
+&lt;ol&gt;
+&lt;li&gt;&lt;a href=&#34;https://github.com/alrra/travis-scripts/blob/master/doc/github-deploy-keys.md&#34;&gt;travis script&lt;/a&gt;&lt;/li&gt;
+&lt;/ol&gt;</description>
+    </item>
+    
+    <item>
+      <title>python: default parameter of function</title>
+      <link>https://zxdvd.github.io/post/python-function-default-parameter/</link>
+      <pubDate>Wed, 05 Aug 2015 00:00:00 +0000</pubDate>
+      
+      <guid>https://zxdvd.github.io/post/python-function-default-parameter/</guid>
+      <description>&lt;p&gt;I&amp;rsquo;ll show a small peice of code at first:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;:::python
+&amp;gt;&amp;gt;&amp;gt; def foo(a=[]):
+...   a.append(1)
+...   print(a)
+...
+&amp;gt;&amp;gt;&amp;gt; foo()
+[1]
+&amp;gt;&amp;gt;&amp;gt; foo()
+[1, 1]
+&amp;gt;&amp;gt;&amp;gt; foo()
+[1, 1, 1]
+&amp;gt;&amp;gt;&amp;gt; foo
+&amp;lt;function foo at 0x7efc48708bf8&amp;gt;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;I was confused by this when first met it years ago. A lot of people, me
+included, may think that list &lt;strong&gt;a&lt;/strong&gt; should always be &lt;strong&gt;[1]&lt;/strong&gt; and why it behaviors like a
+global variable.&lt;/p&gt;
+
+&lt;h4 id=&#34;everything-is-an-object&#34;&gt;Everything is an object&lt;/h4&gt;
+
+&lt;p&gt;We frequently see this quote but it&amp;rsquo;s not easy to understand.&lt;/p&gt;
+
+&lt;p&gt;In python, a function is an object too. This object is created after definition.
+And the function name is just like a reference to the object. And the default
+parameter of the function is also determined at the same time.&lt;/p&gt;
+
+&lt;p&gt;&lt;/p&gt;
+
+&lt;p&gt;Following is official documentation of &lt;a href=&#34;https://docs.python.org/3.5/reference/compound_stmts.html#function-definitions&#34;&gt;function
+definitions&lt;/a&gt;&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;:::text
+Default parameter values are evaluated from left to right when the function
+definition is executed. This means that the expression is evaluated once,
+when the function is defined, and that the same “pre-computed” value is used
+for each call. This is especially important to understand when a default
+parameter is a mutable object, such as a list or a dictionary: if the
+function modifies the object (e.g. by appending an item to a list), the
+default value is in effect modified. This is generally not what was
+intended. A way around this is to use None as the default, and
+explicitly test for it in the body of the function.
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Summary: default parameter is evaluated only ONCE at the creation of the
+function object. It&amp;rsquo;s NOT evaluated when the function is called.&lt;/p&gt;
+
+&lt;p&gt;Another piece of code:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;:::python
+&amp;gt;&amp;gt;&amp;gt; def foo(a=[]):
+...   print(&#39;id of a is: &#39;, id(a))
+...   a.append(1)
+&amp;gt;&amp;gt;&amp;gt; dir(foo)
+[&#39;__annotations__&#39;, &#39;__call__&#39;, &#39;__class__&#39;, &#39;__closure__&#39;, &#39;__code__&#39;,
+&#39;__defaults__&#39;, &#39;__delattr__&#39;, &#39;__dict__&#39;, &#39;__dir__&#39;, ... ... ]
+&amp;gt;&amp;gt;&amp;gt; foo.__defaults__
+([],)
+&amp;gt;&amp;gt;&amp;gt; foo()
+id of a is:  139897639740424
+&amp;gt;&amp;gt;&amp;gt; foo.__defaults__
+([1],)
+&amp;gt;&amp;gt;&amp;gt; foo()
+id of a is:  139897639740424
+&amp;gt;&amp;gt;&amp;gt; foo.__defaults__
+([1, 1],)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;We could see that after definition of the function, we have object foo. It has a
+lot of attributes just like other classes. And the value of default parameter
+are stored at the &lt;strong&gt;__default__&lt;/strong&gt;. At first, it has an empty list. It&amp;rsquo;s appended
+once the function is called. Moreover, the id of a is not changed while it is
+called at the second time.&lt;/p&gt;
+
+&lt;p&gt;Now I think we can explain it.&lt;/p&gt;
+
+&lt;p&gt;Default parameters are valuated and stored at the __default__ attribute of the
+function object. If it is mutable like list, it may be modified (like the
+&lt;code&gt;a.append(1)&lt;/code&gt; in the example) and the modification will be kept.&lt;/p&gt;
+
+&lt;h4 id=&#34;reference&#34;&gt;Reference:&lt;/h4&gt;
+
+&lt;ol&gt;
+&lt;li&gt;&lt;a href=&#34;http://www.jeffknupp.com/blog/2013/02/14/drastically-improve-your-python-understanding-pythons-execution-model&#34;&gt;Understanding Python&amp;rsquo;s Execution Model&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;http://stackoverflow.com/questions/1132941/least-astonishment-in-python-the-mutable-default-argument&#34;&gt;The Mutable Default Argument&lt;/a&gt;&lt;/li&gt;
+&lt;/ol&gt;</description>
+    </item>
+    
+    <item>
+      <title>Summary: the curl bugzilla project</title>
+      <link>https://zxdvd.github.io/post/summary-curl-bugzilla/</link>
+      <pubDate>Fri, 12 Dec 2014 00:00:00 +0000</pubDate>
+      
+      <guid>https://zxdvd.github.io/post/summary-curl-bugzilla/</guid>
+      <description>&lt;p&gt;I started a small project based on tornado and mongodb last week, now I&amp;rsquo;d like
+to write a summary about it since most functions are finished.&lt;/p&gt;
+
+&lt;h3 id=&#34;why-start-this-project&#34;&gt;Why start this project&lt;/h3&gt;
+
+&lt;ol&gt;
+&lt;li&gt;&lt;p&gt;We used bugzilla frequently but the traffic to bugzilla is very slow.&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;It uses openid to login and the authentication cookies last very short.&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;Too many irrelevant products.&lt;/p&gt;&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;h3 id=&#34;goal-of-the-project&#34;&gt;Goal of the project&lt;/h3&gt;
+
+&lt;ol&gt;
+&lt;li&gt;&lt;p&gt;Using curl to search the bugzilla easily. You can search by keywords, or email.&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;Can easily get latest reported bugs of a specific product.&lt;/p&gt;&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;h3 id=&#34;how-to&#34;&gt;How to?&lt;/h3&gt;
+
+&lt;ol&gt;
+&lt;li&gt;&lt;p&gt;Our bugzilla enabled the xmlrpc api so it&amp;rsquo;s very easy to fetch data using
+xmlrpcclient library. I chose to store data with mongodb.&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;Wrote the web server based on tornado. Parsed the requests and queried the
+mongodb and then wrote back the data.&lt;/p&gt;&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;Code repo:
+&lt;a href=&#34;https://github.com/zxdvd/scripts/tree/master/bugzilla&#34;&gt;github.com/zxdvd/scripts/tree/master/bugzilla&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;I didn&amp;rsquo;t use a independent repo since there isn&amp;rsquo;t too much codes.&lt;/p&gt;
+
+&lt;p&gt;&lt;/p&gt;
+
+&lt;h3 id=&#34;result&#34;&gt;Result&lt;/h3&gt;
+
+&lt;pre&gt;&lt;code&gt;&amp;gt; curl 147.2.212.204/gnome
+866644 @lupe.amezquita sles12   | [HP HPS Bug] SLES12 is not showing the mounted
+(via iLO virtual media) virtual folder or images as media in desktop GUI page
+881245 @whdu           sled12   | Update package &amp;quot;update-test-affects-package-manager&amp;quot;
+from &amp;quot;Software Update&amp;quot; trigger relogin instead of restarting gpk-update-viewer
+864872 @fcrozat        sled12   | gnome-shell lock-screen should react on simple
+click
+846028 @oneukum        sled11sp3| gnome-power-manager without warning adds a week
+to wakeup date
+818242 @hpj            sled11sp3| Evince hangs on specific PDF
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;what-i-learned&#34;&gt;What I learned?&lt;/h3&gt;
+
+&lt;h4 id=&#34;libraries&#34;&gt;Libraries&lt;/h4&gt;
+
+&lt;ol&gt;
+&lt;li&gt;&lt;p&gt;&lt;strong&gt;xmlrpc.client&lt;/strong&gt;&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;from xmlrpc.client import ServerProxy
+
+proxy = ServerProxy(uri, use_datetime=True)
+bugs = proxy.Bug.search({&#39;product&#39;: [&#39;product you want to fetch&#39;]})
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;ul&gt;
+&lt;li&gt;The uri could be like this: &lt;code&gt;https://username:passwd@api.xxx.com&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;Using &lt;code&gt;use_datetime=True&lt;/code&gt; option, it will convert the time to class
+&lt;code&gt;datetime.datetime&lt;/code&gt;. Otherwise, you&amp;rsquo;ll get a &lt;code&gt;xmlrpc.client.DateTime&lt;/code&gt;
+instance and it&amp;rsquo;ll be not recognized by json module and pymongo module.&lt;/li&gt;
+&lt;/ul&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;&lt;strong&gt;click&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;I&amp;rsquo;d like to use this third party library instead of the standard argparse
+because it&amp;rsquo;s simple and easy to use and it has nice and rich documentation. I
+used it to parse the username and password of the bugzilla (It&amp;rsquo;s not necessary
+if you embedded username and password in the url).&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;&lt;strong&gt;pymongo&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;The python interface of the mongodb.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;:::python
+client = MongoClient(&#39;mongodb://IP_ADDRESS:27017/&#39;)
+db = client.bz                   //bz is name of the db
+prod_col = db.prods              //prods is name of collection
+prod_col.save(item)              //dict type contains data of a bug
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;bz and prods are names I gave to db and collections, it could be any other names
+if you like.&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;&lt;strong&gt;tornado&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;I&amp;rsquo;ve ever learned and used django and flask. Now I want to try another cool web
+framework&amp;ndash;tornado, it&amp;rsquo;s famous for its asynchronization. The document is not so
+rich as django but I think it&amp;rsquo;s good and enough. You can get started with it
+quickly.&lt;/p&gt;&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;h4 id=&#34;miscellaneous&#34;&gt;Miscellaneous&lt;/h4&gt;
+
+&lt;ol&gt;
+&lt;li&gt;&lt;p&gt;&lt;strong&gt;terminal color&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;I want each column could be distinguished by different color. I learnt a
+little about ternimal formatting. So I need to add some prefix strings to change
+font color or background color or other effects. Examples:&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;echo -e &amp;quot;\033[31mHello World\033[0m&amp;quot;&lt;/code&gt; will change font color to red. The
+&lt;code&gt;\033[31m&lt;/code&gt; will change all behind it to red and &lt;code&gt;\033[0m&lt;/code&gt; will reset all to
+default. (You could replace \033 with \e in shell)&lt;/p&gt;
+
+&lt;p&gt;In python, it should be like &lt;code&gt;print(&#39;\033[31mHello World\033[0m&#39;)&lt;/code&gt;. But
+mixing them together looks a little ugly. So I wrapped needed color prefix
+strings to a dict and then used the format method of string. Examples:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;:::python
+term_color = {&#39;blk&#39;: &#39;\033[30m&#39;, &#39;green&#39;: &#39;\033[32m&#39;,
+              &#39;red&#39;: &#39;\033[31m&#39;, &#39;reset&#39;: &#39;\033[0m&#39;}
+p = {&#39;name&#39;: &#39;John&#39;, &#39;age&#39;: &#39;20&#39;}
+p.update(term_color)
+print(&#39;I am {red}{name}{reset}, I am {age} years old&#39;.format(**p))
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;a href=&#34;http://misc.flogisoft.com/bash/tip_colors_and_formatting&#34;&gt;&lt;strong&gt;Ref: bash terminal color and
+formatting&lt;/strong&gt;&lt;/a&gt;&lt;/p&gt;&lt;/li&gt;
+&lt;/ol&gt;</description>
+    </item>
+    
+    <item>
+      <title>Linux--multiple routing tables</title>
+      <link>https://zxdvd.github.io/post/multiple-routing-tables/</link>
+      <pubDate>Thu, 30 Oct 2014 00:00:00 +0000</pubDate>
+      
+      <guid>https://zxdvd.github.io/post/multiple-routing-tables/</guid>
+      <description>&lt;p&gt;Several months ago, my colleague got a problem that some of his virtual
+machines. I dug into this problem and finally solved it.&lt;/p&gt;
+
+&lt;p&gt;Following is the network topology =&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&#34;https://zxdvd.github.io/images/post/network-topo-mult-routes.jpg&#34; alt=&#34;network topology&#34; /&gt;&lt;/p&gt;
+
+&lt;p&gt;It has following problems =&lt;br /&gt;
+The br2 and vnet5 and vnet6 can only communicate with subnet 192.168.2.0/24,
+they cannot send or receive packages from other subnets.&lt;/p&gt;
+
+&lt;p&gt;Explanation =&lt;br /&gt;
+Because there is only route to 192.168.2.0/24 for the br2. Let&amp;rsquo;s try to analyze
+it through a ping process. If you ping 192.168.2.7 (br2) from a machine outside
+of this subnet, like 192.168.1.10, below is the detailed routing path =&lt;br /&gt;
+src to dst = 192.168.1.10 checks the destination and finds it&amp;rsquo;s in another subnet
+so send it to the default gateway.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;192.168.1.10  --&amp;gt;  to gateway 192.168.1.254   OK
+192.168.1.254 --&amp;gt;  forward to 192.168.2.254   OK
+192.168.2.254 --&amp;gt;  forward to 192.168.2.7     OK
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;dst to src = Also 192.168.2.7 would send to default gateway, but let&amp;rsquo;s check the
+default gateway of the machine. It&amp;rsquo;s &lt;code&gt;default via 192.168.1.254 dev br1&lt;/code&gt;, so it
+fails to send the package since the br1 interface won&amp;rsquo;t send a package whose
+source ip address is not bounded to itself.&lt;/p&gt;
+
+&lt;p&gt;Now we knows that the br2 can receive packages but fail to send them to other
+subnets. So how to? Add another default gateway? A machine can only have one
+default gateway.&lt;/p&gt;
+
+&lt;p&gt;&lt;/p&gt;
+
+&lt;h3 id=&#34;routing-tables&#34;&gt;Routing tables&lt;/h3&gt;
+
+&lt;p&gt;It&amp;rsquo;s time to get something about the routing tables. For the linux, you can have
+routing tables for 0 to 255. And you can set rules of each table, e.g. let the
+br1 follows the table 10 and the br2 follows the table 20, with this, our
+problem could be tackled perfectly.&lt;/p&gt;
+
+&lt;p&gt;All routing tables are listed in file &lt;code&gt;/etc/iproute2/rt_tables&lt;/code&gt;, you can see
+tables local, main, default there, main is the default table when you do all
+kinds of add/delete.&lt;br /&gt;
+To check items in a table, using &lt;code&gt;#ip route show table TABLE-ID-or-TABLE-NAME&lt;/code&gt;&lt;/p&gt;
+
+&lt;h3 id=&#34;setup-multiple-routing-tables&#34;&gt;Setup multiple routing tables&lt;/h3&gt;
+
+&lt;p&gt;From above we know, to solve this problem we need to set up  routing tables for
+both br1 and br2. We can set the br1 to use the main table by default then we
+could only set up another one for the br2.&lt;/p&gt;
+
+&lt;ol&gt;
+&lt;li&gt;&lt;p&gt;&lt;code&gt;#echo 10 table_br2 &amp;gt;&amp;gt; /etc/iproute2/rt_tables&lt;/code&gt; to add a table.&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;&lt;code&gt;#ip route add 192.168.2.0/24 dev br2 src 192.168.2.7 table table_br2&lt;/code&gt;&lt;br /&gt;
+&lt;code&gt;#ip route default via 192.168.2.254 dev br2 table table_br2&lt;/code&gt;&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;After setting up this table, we need to rules to let the packages to know
+which table to select.&lt;br /&gt;
+&lt;code&gt;#ip rule add from 192.168.2.7 table table_br2&lt;/code&gt;&lt;br /&gt;
+This rule tells all packages whose source address is 192.168.2.7 to follow
+the table_br2.&lt;br /&gt;
+&lt;code&gt;#ip rule add oif br2 table table_br2    //oif=output interface&lt;/code&gt;&lt;/p&gt;&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;Now all the settings are finished. But remember that =&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;All the &lt;code&gt;ip XXX&lt;/code&gt; settings are temporary&lt;/strong&gt; which mean that they&amp;rsquo;ll get lost
+   after rebooting. If you want to keep them permanent, you can write them to
+   &amp;ldquo;/etc/init.d/boot.local&amp;rdquo; or use other scripts.&lt;/p&gt;
+
+&lt;h4 id=&#34;references&#34;&gt;References&lt;/h4&gt;
+
+&lt;ol&gt;
+&lt;li&gt;&lt;p&gt;&lt;a href=&#34;http =//linux-ip.net/html/routing-tables.html&#34;&gt;routing tables&lt;/a&gt;&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;&lt;a href=&#34;http =//lartc.org/howto/lartc.rpdb.multiple-links.html&#34;&gt;routing&amp;ndash;multiple uplinks&lt;/a&gt;&lt;/p&gt;&lt;/li&gt;
+&lt;/ol&gt;</description>
+    </item>
+    
+    <item>
+      <title>不要在container里使用sshd的n个理由</title>
+      <link>https://zxdvd.github.io/post/trans/why-not-sshd-docker/</link>
+      <pubDate>Tue, 19 Aug 2014 00:00:00 +0000</pubDate>
+      
+      <guid>https://zxdvd.github.io/post/trans/why-not-sshd-docker/</guid>
+      <description>&lt;p&gt;原文链接： &lt;a href=&#34;http://blog.docker.com/2014/06/why-you-dont-need-to-run-sshd-in-docker&#34;&gt;why you don&amp;rsquo;t need to run sshd in your docker containers&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;今天在docker官方博客上看到一篇很好的文章，很有收获，打算翻译过来。
+这篇文章讲的是不在container中使用sshd的n个理由&amp;ndash;其实我之前很喜欢在里面开个sshd方便去check状态log之类的。&lt;/p&gt;
+
+&lt;p&gt;在使用docker的时候，总是有人会问“怎么进入到container里面去呢？”，然
+后一些人就会说“开个sshd不就行了”。当你看完这篇文章之后你会发现sshd是不
+必要的，除非你需要一个ssh server的container。&lt;/p&gt;
+
+&lt;p&gt;一开始大家都会禁不住去用ssh server，这看起来是最简单的方法&amp;ndash;几乎每个
+人都用过ssh的。对于我们很多人来说，ssh是一个基本技能，对各种公私钥，
+无密码登陆，端口转发等等都很熟悉。有了这些基础，自然而然就会想通过sshd
+进入container内部了。&lt;/p&gt;
+
+&lt;p&gt;现在假设你要redis server或者java webservice的docker image。考虑下下面几个问题：&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;你需要sshd来干嘛？&lt;/strong&gt;多数情况下你可能只是需要做下备份，查看下日志，或者重启下进程、调整下配置文件，甚至用gdb、strace来调试等等。那么后面我来告诉你怎么不使用sshd来完成这些任务。&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;p&gt;&lt;strong&gt;你怎么管理这些sshd的公私钥和密码呢？&lt;/strong&gt;集成到image或者放到一个单独的volume？那么需要更新公私钥或者密码时怎么办呢？如果是集成到image里面的，你需要重新生成image，然后再一次部署，然后重启container，这看起来没什么大不了，不过也不简单吧。更好一点的办法是把这些东西放到一个单独的volume，不过这个方法也有明显的缺陷。你得确保container没有这个volume的写权限（这里不是太明白为啥），否则它会弄乱你的公私钥证书之类的（然后你就登不进去了）。如果是多个container共享一个这样的volume的话情况会更糟糕。如果ssh能放在别的什么地方不就会少一个大烦恼么？&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;&lt;strong&gt;怎么处理ssh安全相关的升级呢？&lt;/strong&gt;ssh server的确是很安全的，但还是会出现
+安全漏洞，然后为了打补丁你不得不重新制作所有的image，然后重启所以container。这也意味着就算你使用一些基本不会危及到系统安全的服务比如memcached，你也不得不经常关注安全相关的更新等等，因为ssh的缘故你的container的安全风险要大多了。还是那句话，如果ssh能放在别的地方，这些安全相关的风险都会被隔离开，对吧？&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;&lt;strong&gt;你觉得仅仅添加一个ssh就行了么？&lt;/strong&gt;你还需要一个进程管理器，比如monit或者supervisor。因为docker只关注一个进程。当你需要使用多进程的时候，你需要一个进程管理器去管理其他的进程。这样的话，一个可靠简单的container变得很复杂了。比如你的应用程序退出了或者跑死了，本来你可以通过docker获得一些调试信息，现在你只能通过进程管理器去找这些信息了。&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;&lt;strong&gt;就算你能轻松的把ssh server加进去，但是你能处理好登录权限管理、安全相关的这些问题么？&lt;/strong&gt;在小公司可能还好。在一个大的公司，很可能你想把ssh server添加到container，然后是另外一个人负责管理远程登录的权限许可等等。这么一个大的公司一般都有很严格的关于远程登录的规章。考虑到这些，你还想把ssh server加到container里么?&lt;/p&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h4 id=&#34;那么我该怎么办&#34;&gt;那么我该怎么办？？&lt;/h4&gt;
+
+&lt;ol&gt;
+&lt;li&gt;&lt;h5 id=&#34;备份数据&#34;&gt;备份数据&lt;/h5&gt;
+
+&lt;p&gt;你的数据应该放在一个volume里。然后运行另一个container，通过&lt;code&gt;--volumes-from&lt;/code&gt;参数来共享前一个container的数据。这个新的container就专门用来备份数据。这样做还有一个好处：有时候你需要安装一些工具（如s3cmd）来备份这些数据到其他的地方，你可以在这个备份专用的container里面随便倒腾了而不是在运行服务的那个container里弄。&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;h5 id=&#34;查看日志&#34;&gt;查看日志&lt;/h5&gt;
+
+&lt;p&gt;老办法，用volume！！将所有日志放在一个目录，然后把这个目录设为volume，像上面备份一样，开另外一个container来处理这些日志，你可以随意安装你顺手的工具来处理这些日志，始终保持你的服务在一个纯净的环境里运行。&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;h5 id=&#34;重启服务&#34;&gt;重启服务&lt;/h5&gt;
+
+&lt;p&gt;实际上所有服务都可以通过signal来重启。当你执行&lt;code&gt;/etc/init.d/foo
+restart&lt;/code&gt;或者&lt;code&gt;service foo restart&lt;/code&gt;,这些都是通过发送特殊的signal给进程来实现的。你可以用这个命令来发送signal &lt;code&gt;docker
+kill -s &amp;lt;signal&amp;gt;&lt;/code&gt;.
+有一些并不监听signal，他们通过特殊的socket来接受指令。如果是tcp
+socket，可以通过网络来发送这些指令。如果是UNIX
+socket，还是老办法，用volume。通过启用另一个container来共享这个包含UNIX socket的volume，你就可以通过它来实现重启服务等等。&lt;/p&gt;
+
+&lt;p&gt;这看起来很复杂的样子?!
+其实并不复杂。假设你的服务foo生成了一个socket文件&lt;code&gt;/var/run/foo.sock&lt;/code&gt;,
+需要用&lt;code&gt;fooctl restart&lt;/code&gt;来重启服务。你可以在启动container的时候用&lt;code&gt;-v /var/run&lt;/code&gt;(或者在Dockerfile里加一行 &lt;code&gt;VOLUME /var/run&lt;/code&gt;)，然后当你需要重启这个服务的时候你可以用同一个image再启动另外一个container，使用&lt;code&gt;--volumes-from&lt;/code&gt;参数来共享前一个container的 /var/run, 然后执行&lt;code&gt;fooctl restart&lt;/code&gt;，这样 /var/run/foo.sock这个文件会覆写为重启服务的指令传给前一个container。&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;:::sh
+# Starting the service
+CID=$(docker run -d -v /var/run fooservice)
+# Restarting the service with a sidekick container
+docker run --volumes-from $CID fooservice fooctl restart
+&lt;/code&gt;&lt;/pre&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;h5 id=&#34;修改配置文件&#34;&gt;修改配置文件&lt;/h5&gt;
+
+&lt;p&gt;如果你修改的配置是需要长期使用的，你应该通过image来实现&amp;ndash;因为当你启动一个新的container的时候你得到的还是久的配置，修改的部分会丢失掉。如果我需要在一个服务的使用期间修改配置呢，比如virtual
+hosts？这种情况你还是应该使用volume。
+配置文件应该放在一个volume里，通过另外一个专门处理编辑的container来修改。在这个container里面你可以使用一切你喜欢的工具:
+ssh+你喜欢的编辑器，或者一个有api借口的web
+service，或者一个从其他的地方来获取配置的crontab任务等等。这样的话可以隔离风险:
+一个container专门来跑服务，另一个专门处理配置更新的相关事务。可是有的时候我只是需要临时改下配置，怎么办??!请看下一章节。&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;h5 id=&#34;调试服务&#34;&gt;调试服务&lt;/h5&gt;
+
+&lt;p&gt;这是我能想到的仅有的你真的需要使用container的shell的场景。你可能需要gdb、strace、修改配置等等。这种情况你需要
+nsenter。&lt;/p&gt;&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;h4 id=&#34;nsenter介绍&#34;&gt;nsenter介绍&lt;/h4&gt;
+
+&lt;p&gt;nsenter是一个可以进入到linux的各个namespace的工具。它可以进入现存的namespace，或者在新的namespace里运行程序。
+什么是namespace？namespace是linux内核的一个特性，container技术的核心要素之一。
+简单的说，有了nsenter，你可以获得任何container的shell即使这个container没有ssh一类的服务。&lt;/p&gt;
+
+&lt;ol&gt;
+&lt;li&gt;&lt;h5 id=&#34;怎么安装&#34;&gt;怎么安装&lt;/h5&gt;
+
+&lt;p&gt;Github repo &lt;a href=&#34;https://github.com/jpetazzo/nsenter&#34;&gt;jpetazzo/nsenter&lt;/a&gt;. 运行&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;docker run -v /usr/local/bin:/target jpetazzo/nsenter
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;会安装nsenter到/usr/local/bin，
+然后你就可以用它了。有一些发行版已经包含了nsenter（util-linux包）。&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;h5 id=&#34;怎么使用&#34;&gt;怎么使用&lt;/h5&gt;
+
+&lt;p&gt;第一步获得container的PID&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;PID=$(docker inspect --format {{.State.Pid}} &amp;lt;container_name_or_ID&amp;gt;)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;然后&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;nsenter --target $PID --mount --uts --ipc --net --pid
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;这样你就获得了这个container的shell。如果你想在脚本或者自动化环境里使用，可以将它作为参数传给nsenter。它的工作方式跟chroot非常类似。&lt;/p&gt;&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;h4 id=&#34;关于远程控制&#34;&gt;关于远程控制&lt;/h4&gt;
+
+&lt;p&gt;如果你想远程进入一个container，至少有2种方法：&lt;/p&gt;
+
+&lt;ol&gt;
+&lt;li&gt;ssh登陆到docker host，然后使用nsenter进入这个container&lt;/li&gt;
+&lt;li&gt;ssh登陆到docker host，通过特殊的key来限制使用nsenter&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;第一种方法很简单，但是需要有docker host的root权限（从安全角度来说不太好）。
+第二种方法是在ssh的authorized_keys文件加上command=字段来控制。
+典型的authorized_keys文件如下&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;:::sh
+ssh-rsa AAAAB3N…QOID== jpetazzo@tarrasque
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;你可以限制ssh使用的命令。比如你希望能远程查看你的系统的可以内存，但是你不希望把整个shell暴露出去，你可以这样修改authorized_keys文件&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;:::sh
+command=&amp;quot;free&amp;quot; ssh-rsa AAAAB3N…QOID== jpetazzo@tarrasque
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;这样，当你通过这个ssh
+key登录进来，它会执行free命令而不是给你一个shell。除了执行free它啥都做不了。&lt;/p&gt;
+
+&lt;h4 id=&#34;总结&#34;&gt;总结&lt;/h4&gt;
+
+&lt;p&gt;那么真的不能在container里面使用ssh server么？实际上，这也没什么大问题。当你不能ssh到docker host却有需要进入container的时候ssh还是很方便的。
+但是我们也要注意到我们有很多方法可以实现我们想要的功能并且不使用ssh server。
+docker允许你使用任何你喜欢的方式。不要总是把container想成一个小的vps，它还有很多其他的方式方法帮你做一个好的决定。&lt;/p&gt;</description>
+    </item>
+    
+  </channel>
+</rss>

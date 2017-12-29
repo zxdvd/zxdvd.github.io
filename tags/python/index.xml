@@ -1,0 +1,245 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>zxdvd&#39;s notes</title>
+    <link>https://zxdvd.github.io/tags/python/index.xml</link>
+    <description>Recent content on zxdvd&#39;s notes</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <atom:link href="https://zxdvd.github.io/tags/python/index.xml" rel="self" type="application/rss+xml" />
+    
+    <item>
+      <title>python: default parameter of function</title>
+      <link>https://zxdvd.github.io/post/python-function-default-parameter/</link>
+      <pubDate>Wed, 05 Aug 2015 00:00:00 +0000</pubDate>
+      
+      <guid>https://zxdvd.github.io/post/python-function-default-parameter/</guid>
+      <description>&lt;p&gt;I&amp;rsquo;ll show a small peice of code at first:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;:::python
+&amp;gt;&amp;gt;&amp;gt; def foo(a=[]):
+...   a.append(1)
+...   print(a)
+...
+&amp;gt;&amp;gt;&amp;gt; foo()
+[1]
+&amp;gt;&amp;gt;&amp;gt; foo()
+[1, 1]
+&amp;gt;&amp;gt;&amp;gt; foo()
+[1, 1, 1]
+&amp;gt;&amp;gt;&amp;gt; foo
+&amp;lt;function foo at 0x7efc48708bf8&amp;gt;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;I was confused by this when first met it years ago. A lot of people, me
+included, may think that list &lt;strong&gt;a&lt;/strong&gt; should always be &lt;strong&gt;[1]&lt;/strong&gt; and why it behaviors like a
+global variable.&lt;/p&gt;
+
+&lt;h4 id=&#34;everything-is-an-object&#34;&gt;Everything is an object&lt;/h4&gt;
+
+&lt;p&gt;We frequently see this quote but it&amp;rsquo;s not easy to understand.&lt;/p&gt;
+
+&lt;p&gt;In python, a function is an object too. This object is created after definition.
+And the function name is just like a reference to the object. And the default
+parameter of the function is also determined at the same time.&lt;/p&gt;
+
+&lt;p&gt;&lt;/p&gt;
+
+&lt;p&gt;Following is official documentation of &lt;a href=&#34;https://docs.python.org/3.5/reference/compound_stmts.html#function-definitions&#34;&gt;function
+definitions&lt;/a&gt;&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;:::text
+Default parameter values are evaluated from left to right when the function
+definition is executed. This means that the expression is evaluated once,
+when the function is defined, and that the same “pre-computed” value is used
+for each call. This is especially important to understand when a default
+parameter is a mutable object, such as a list or a dictionary: if the
+function modifies the object (e.g. by appending an item to a list), the
+default value is in effect modified. This is generally not what was
+intended. A way around this is to use None as the default, and
+explicitly test for it in the body of the function.
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Summary: default parameter is evaluated only ONCE at the creation of the
+function object. It&amp;rsquo;s NOT evaluated when the function is called.&lt;/p&gt;
+
+&lt;p&gt;Another piece of code:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;:::python
+&amp;gt;&amp;gt;&amp;gt; def foo(a=[]):
+...   print(&#39;id of a is: &#39;, id(a))
+...   a.append(1)
+&amp;gt;&amp;gt;&amp;gt; dir(foo)
+[&#39;__annotations__&#39;, &#39;__call__&#39;, &#39;__class__&#39;, &#39;__closure__&#39;, &#39;__code__&#39;,
+&#39;__defaults__&#39;, &#39;__delattr__&#39;, &#39;__dict__&#39;, &#39;__dir__&#39;, ... ... ]
+&amp;gt;&amp;gt;&amp;gt; foo.__defaults__
+([],)
+&amp;gt;&amp;gt;&amp;gt; foo()
+id of a is:  139897639740424
+&amp;gt;&amp;gt;&amp;gt; foo.__defaults__
+([1],)
+&amp;gt;&amp;gt;&amp;gt; foo()
+id of a is:  139897639740424
+&amp;gt;&amp;gt;&amp;gt; foo.__defaults__
+([1, 1],)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;We could see that after definition of the function, we have object foo. It has a
+lot of attributes just like other classes. And the value of default parameter
+are stored at the &lt;strong&gt;__default__&lt;/strong&gt;. At first, it has an empty list. It&amp;rsquo;s appended
+once the function is called. Moreover, the id of a is not changed while it is
+called at the second time.&lt;/p&gt;
+
+&lt;p&gt;Now I think we can explain it.&lt;/p&gt;
+
+&lt;p&gt;Default parameters are valuated and stored at the __default__ attribute of the
+function object. If it is mutable like list, it may be modified (like the
+&lt;code&gt;a.append(1)&lt;/code&gt; in the example) and the modification will be kept.&lt;/p&gt;
+
+&lt;h4 id=&#34;reference&#34;&gt;Reference:&lt;/h4&gt;
+
+&lt;ol&gt;
+&lt;li&gt;&lt;a href=&#34;http://www.jeffknupp.com/blog/2013/02/14/drastically-improve-your-python-understanding-pythons-execution-model&#34;&gt;Understanding Python&amp;rsquo;s Execution Model&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href=&#34;http://stackoverflow.com/questions/1132941/least-astonishment-in-python-the-mutable-default-argument&#34;&gt;The Mutable Default Argument&lt;/a&gt;&lt;/li&gt;
+&lt;/ol&gt;</description>
+    </item>
+    
+    <item>
+      <title>Summary: the curl bugzilla project</title>
+      <link>https://zxdvd.github.io/post/summary-curl-bugzilla/</link>
+      <pubDate>Fri, 12 Dec 2014 00:00:00 +0000</pubDate>
+      
+      <guid>https://zxdvd.github.io/post/summary-curl-bugzilla/</guid>
+      <description>&lt;p&gt;I started a small project based on tornado and mongodb last week, now I&amp;rsquo;d like
+to write a summary about it since most functions are finished.&lt;/p&gt;
+
+&lt;h3 id=&#34;why-start-this-project&#34;&gt;Why start this project&lt;/h3&gt;
+
+&lt;ol&gt;
+&lt;li&gt;&lt;p&gt;We used bugzilla frequently but the traffic to bugzilla is very slow.&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;It uses openid to login and the authentication cookies last very short.&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;Too many irrelevant products.&lt;/p&gt;&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;h3 id=&#34;goal-of-the-project&#34;&gt;Goal of the project&lt;/h3&gt;
+
+&lt;ol&gt;
+&lt;li&gt;&lt;p&gt;Using curl to search the bugzilla easily. You can search by keywords, or email.&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;Can easily get latest reported bugs of a specific product.&lt;/p&gt;&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;h3 id=&#34;how-to&#34;&gt;How to?&lt;/h3&gt;
+
+&lt;ol&gt;
+&lt;li&gt;&lt;p&gt;Our bugzilla enabled the xmlrpc api so it&amp;rsquo;s very easy to fetch data using
+xmlrpcclient library. I chose to store data with mongodb.&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;Wrote the web server based on tornado. Parsed the requests and queried the
+mongodb and then wrote back the data.&lt;/p&gt;&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;Code repo:
+&lt;a href=&#34;https://github.com/zxdvd/scripts/tree/master/bugzilla&#34;&gt;github.com/zxdvd/scripts/tree/master/bugzilla&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;I didn&amp;rsquo;t use a independent repo since there isn&amp;rsquo;t too much codes.&lt;/p&gt;
+
+&lt;p&gt;&lt;/p&gt;
+
+&lt;h3 id=&#34;result&#34;&gt;Result&lt;/h3&gt;
+
+&lt;pre&gt;&lt;code&gt;&amp;gt; curl 147.2.212.204/gnome
+866644 @lupe.amezquita sles12   | [HP HPS Bug] SLES12 is not showing the mounted
+(via iLO virtual media) virtual folder or images as media in desktop GUI page
+881245 @whdu           sled12   | Update package &amp;quot;update-test-affects-package-manager&amp;quot;
+from &amp;quot;Software Update&amp;quot; trigger relogin instead of restarting gpk-update-viewer
+864872 @fcrozat        sled12   | gnome-shell lock-screen should react on simple
+click
+846028 @oneukum        sled11sp3| gnome-power-manager without warning adds a week
+to wakeup date
+818242 @hpj            sled11sp3| Evince hangs on specific PDF
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;what-i-learned&#34;&gt;What I learned?&lt;/h3&gt;
+
+&lt;h4 id=&#34;libraries&#34;&gt;Libraries&lt;/h4&gt;
+
+&lt;ol&gt;
+&lt;li&gt;&lt;p&gt;&lt;strong&gt;xmlrpc.client&lt;/strong&gt;&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;from xmlrpc.client import ServerProxy
+
+proxy = ServerProxy(uri, use_datetime=True)
+bugs = proxy.Bug.search({&#39;product&#39;: [&#39;product you want to fetch&#39;]})
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;ul&gt;
+&lt;li&gt;The uri could be like this: &lt;code&gt;https://username:passwd@api.xxx.com&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;Using &lt;code&gt;use_datetime=True&lt;/code&gt; option, it will convert the time to class
+&lt;code&gt;datetime.datetime&lt;/code&gt;. Otherwise, you&amp;rsquo;ll get a &lt;code&gt;xmlrpc.client.DateTime&lt;/code&gt;
+instance and it&amp;rsquo;ll be not recognized by json module and pymongo module.&lt;/li&gt;
+&lt;/ul&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;&lt;strong&gt;click&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;I&amp;rsquo;d like to use this third party library instead of the standard argparse
+because it&amp;rsquo;s simple and easy to use and it has nice and rich documentation. I
+used it to parse the username and password of the bugzilla (It&amp;rsquo;s not necessary
+if you embedded username and password in the url).&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;&lt;strong&gt;pymongo&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;The python interface of the mongodb.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;:::python
+client = MongoClient(&#39;mongodb://IP_ADDRESS:27017/&#39;)
+db = client.bz                   //bz is name of the db
+prod_col = db.prods              //prods is name of collection
+prod_col.save(item)              //dict type contains data of a bug
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;bz and prods are names I gave to db and collections, it could be any other names
+if you like.&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;&lt;strong&gt;tornado&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;I&amp;rsquo;ve ever learned and used django and flask. Now I want to try another cool web
+framework&amp;ndash;tornado, it&amp;rsquo;s famous for its asynchronization. The document is not so
+rich as django but I think it&amp;rsquo;s good and enough. You can get started with it
+quickly.&lt;/p&gt;&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;h4 id=&#34;miscellaneous&#34;&gt;Miscellaneous&lt;/h4&gt;
+
+&lt;ol&gt;
+&lt;li&gt;&lt;p&gt;&lt;strong&gt;terminal color&lt;/strong&gt;&lt;/p&gt;
+
+&lt;p&gt;I want each column could be distinguished by different color. I learnt a
+little about ternimal formatting. So I need to add some prefix strings to change
+font color or background color or other effects. Examples:&lt;/p&gt;
+
+&lt;p&gt;&lt;code&gt;echo -e &amp;quot;\033[31mHello World\033[0m&amp;quot;&lt;/code&gt; will change font color to red. The
+&lt;code&gt;\033[31m&lt;/code&gt; will change all behind it to red and &lt;code&gt;\033[0m&lt;/code&gt; will reset all to
+default. (You could replace \033 with \e in shell)&lt;/p&gt;
+
+&lt;p&gt;In python, it should be like &lt;code&gt;print(&#39;\033[31mHello World\033[0m&#39;)&lt;/code&gt;. But
+mixing them together looks a little ugly. So I wrapped needed color prefix
+strings to a dict and then used the format method of string. Examples:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;:::python
+term_color = {&#39;blk&#39;: &#39;\033[30m&#39;, &#39;green&#39;: &#39;\033[32m&#39;,
+              &#39;red&#39;: &#39;\033[31m&#39;, &#39;reset&#39;: &#39;\033[0m&#39;}
+p = {&#39;name&#39;: &#39;John&#39;, &#39;age&#39;: &#39;20&#39;}
+p.update(term_color)
+print(&#39;I am {red}{name}{reset}, I am {age} years old&#39;.format(**p))
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;a href=&#34;http://misc.flogisoft.com/bash/tip_colors_and_formatting&#34;&gt;&lt;strong&gt;Ref: bash terminal color and
+formatting&lt;/strong&gt;&lt;/a&gt;&lt;/p&gt;&lt;/li&gt;
+&lt;/ol&gt;</description>
+    </item>
+    
+  </channel>
+</rss>

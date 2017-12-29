@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>zxdvd&#39;s notes</title>
+    <link>https://zxdvd.github.io/tags/ci/index.xml</link>
+    <description>Recent content on zxdvd&#39;s notes</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <atom:link href="https://zxdvd.github.io/tags/ci/index.xml" rel="self" type="application/rss+xml" />
+    
+    <item>
+      <title>配置travis自动更新github page</title>
+      <link>https://zxdvd.github.io/post/travis-update-github-page/</link>
+      <pubDate>Sat, 05 Nov 2016 00:00:00 +0000</pubDate>
+      
+      <guid>https://zxdvd.github.io/post/travis-update-github-page/</guid>
+      <description>&lt;p&gt;很久没有更新了，evernote里倒是攒了一堆素材，就是没整理，现在准备抽空更新了。
+之前是用pelican生成网页的，后来有次pelican更新了，把一个组件都弄到一个别的repo了，
+然后每次配置又得多clone几个repo了。正好最近学习go，hugo这种single binary感觉也不错，
+配合travis自动更新都不需要安装什么依赖的，然后就决定迁移过来了。&lt;/p&gt;
+
+&lt;p&gt;travis是一个自动化的编译、打包、测试、部署平台，对开源项目免费，支持n多语言，通过自定义脚本，
+感觉就是送了一个打包测试的服务器，不知道他的盈利模式是什么用的，靠少量付费用户能撑起这么多
+开源项目的免费使用么？&lt;/p&gt;
+
+&lt;p&gt;他的工作流程大致如下:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;push OR pull request to a repo -&amp;gt;
+    github notify this event to travis -&amp;gt;
+        travis clone your code and build according the configuration.
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;/p&gt;
+
+&lt;p&gt;以我的github page为例，首先注册travis账号(可以直接用github Oauth登录注册)，登录后同步账号
+选择需要用travis来build的repo。如果是github账号登录的，我发现它以及给所选的repo添加了webhook了
+(当github收到push，pull request等消息的时候，github可以给webhook里配置的外部服务发送消息
+通知)。&lt;/p&gt;
+
+&lt;p&gt;然后在repo的根目录里添加&lt;code&gt;.travis.yml&lt;/code&gt;文件，travis会根据这个文件的配置来build，比如一个简单
+的hello world&lt;/p&gt;
+install: true
+script:
+    - echo &#34;hello world!&#34;
+
+&lt;p&gt;当把这个文件提交并推送到github后，可以发现travis那边就开始build了，而且在log里可以看到整个
+的build过程，不出意外可以看到打印出的&lt;code&gt;hello world!&lt;/code&gt;。&lt;/p&gt;
+
+&lt;p&gt;如果build的过程需要很多外部工具的支持的话，可以在install里面写，比如&lt;/p&gt;
+before_install:
+    - sudo apt-get install python -y
+install:
+    - pip install -r requirements.txt
+
+&lt;p&gt;其实只要恰当的设置好了language，这个build的container里面就自动包含了这个语言需要的一些基本
+工具，很多时候我们需要安装的可能只是一些pip包或者npm包而已。&lt;/p&gt;
+
+&lt;p&gt;以我的&lt;code&gt;.travis.yml&lt;/code&gt;为例&lt;/p&gt;
+branches:
+  only:
+    - content
+
+install: true
+before_script:
+    - &gt;-
+        echo -e $DEPLOY_KEY &gt; $HOME/gh_key \
+            &amp;&amp; chmod 600 $HOME/gh_key \
+            &amp;&amp; printf &#34;%s\n&#34; \
+                &#34;Host github.com&#34; \
+                &#34;    IdentityFile $HOME/gh_key&#34; \
+                &#34;    LogLevel ERROR&#34; &gt;&gt; $HOME/.ssh/config
+    - git config --global user.email $GH_EMAIL
+    - git config --global user.name $GH_USER
+script:
+    - &gt;-
+        ./bin/hugo_linux --theme=blackburn \
+            &amp;&amp; cd public \
+            &amp;&amp; git init \
+            &amp;&amp; git remote add origin git@github.com:zxdvd/zxdvd.github.io.git \
+            &amp;&amp; git add --all \
+            &amp;&amp; git commit -m &#39;update pages via travis&#39; \
+            &amp;&amp; git push -f origin master
+
+&lt;ol&gt;
+&lt;li&gt;&lt;p&gt;通过branch设置可以选择只build那些branch或不build那些branch，我的博客原文在content分支，
+所有只需要build content分支就可以。&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;因为我把hugo的可执行文件也放进repo了，所有我不需要安装任何依赖，直接设置&lt;code&gt;install: true&lt;/code&gt;.&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;before_script里是设置github的deploy key以及用户名配置&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;script里是hugo生成静态文件以及push到master分支的设置。&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;整个配置中用到了3个环境变量(DEPLOY_KEY, GH_USER, GH_EMAIL)，是在travis的网页端设置的，
+通过环境变量可以把一些不能直接写到&lt;code&gt;.travis.yml&lt;/code&gt;的东西(比如密码，sshkey)隐藏起来。&lt;/p&gt;&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;在上面的配置中最后面有一个git push的动作，可以理解为部署，不管是部署到github的某个分支还是部署到
+私人的服务器，都是需要认证的，显然认证需要的密码，秘钥是不能直接写在配置文件里的，这些都应该通过
+环境变量的方式传递。使用这种方式的时候，建议关闭travis的&lt;code&gt;pull request&lt;/code&gt;build的功能(别人提了
+一个pull request，travis自动build下看能不能通过单元测试)，因为恶意攻击者可以篡改&lt;code&gt;.travis.yml&lt;/code&gt;
+文件轻易的窃取环境变量。&lt;/p&gt;
+
+&lt;p&gt;在上面的配置中，我使用的是repo deploy key的方式认证，github支持密码、Personal access tokens、
+ssh key等多种方式认证，前两种权限太高，对全部repo都有效，而deploy key每个repo都可以设置一个或者
+多个，很适合travis部署的情况。&lt;/p&gt;
+
+&lt;p&gt;使用步骤:
+1. 生成ssh key
+  &amp;gt;ssh-keygen -f github_page_deploy_key
+2. 将&lt;code&gt;github_page_deploy_key.pub&lt;/code&gt;文件内容复制到需要部署的github repo的deploy key里
+3. 将&lt;code&gt;github_page_deploy_key&lt;/code&gt;(这个是私钥)添加到travis的ENV里&lt;/p&gt;
+
+&lt;ol&gt;
+&lt;li&gt;不要直接&lt;code&gt;cat github_page_deploy_key&lt;/code&gt;，这样会丢失私钥中的换行符，可以这样获取
+&amp;gt;python -c &amp;lsquo;print(repr(open(&amp;ldquo;github_page_deploy_key&amp;rdquo;).read()))&amp;rsquo;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;在travis里添加环境变量，需要自己加引号，我试了很多次才发现，所有上面的key不能少了前后的引号&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;before_script里写好一个ssh config就可以了，需要注意的是将上面的变量里的字符串恢复到文件需要使用
+&lt;code&gt;echo -e&lt;/code&gt;将\n转义。&lt;/p&gt;&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;至此，整个搭建过程都完成了，以后只管写markdown文档，推送后travis会自动帮忙build整个网站并且自动部署啦。&lt;/p&gt;
+
+&lt;p&gt;##＃ Reference:&lt;/p&gt;
+
+&lt;ol&gt;
+&lt;li&gt;&lt;a href=&#34;https://github.com/alrra/travis-scripts/blob/master/doc/github-deploy-keys.md&#34;&gt;travis script&lt;/a&gt;&lt;/li&gt;
+&lt;/ol&gt;</description>
+    </item>
+    
+  </channel>
+</rss>

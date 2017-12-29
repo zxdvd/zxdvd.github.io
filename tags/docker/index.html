@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="">
+  <meta name="generator" content="Hugo 0.17" />
+
+  <title>Docker &middot; zxdvd&#39;s notes</title>
+
+  
+  
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/pure/0.6.0/pure-min.css">
+
+  <!--[if lte IE 8]>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/pure/0.6.0/grids-responsive-old-ie-min.css">
+  <![endif]-->
+  <!--[if gt IE 8]><!-->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/pure/0.6.0/grids-responsive-min.css">
+  <!--<![endif]-->
+
+  <!--[if lte IE 8]>
+  <link rel="stylesheet" href="/css/side-menu-old-ie.css">
+  <![endif]-->
+  <!--[if gt IE 8]><!-->
+  <link rel="stylesheet" href="/css/side-menu.css">
+  <!--<![endif]-->
+
+  <link rel="stylesheet" href="/css/blackburn.css">
+
+  
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css">
+
+  
+  
+
+  
+  
+  <link rel="alternate" type="application/rss+xml" title="zxdvd&#39;s notes" href="https://zxdvd.github.io/tags/docker/index.xml" />
+  
+
+  
+
+  <link rel="shortcut icon" href="https://zxdvd.github.ioimg/favicon.ico" type="image/x-icon" />
+
+  
+  
+
+</head>
+
+
+<body>
+<div id="layout">
+
+  
+<a href="#menu" id="menuLink" class="menu-link">
+  
+  <span></span>
+</a>
+<div id="menu">
+
+  
+  <a class="pure-menu-heading brand" href="/">zxdvd</a>
+
+
+  <div class="pure-menu">
+    <ul class="pure-menu-list">
+      
+      
+        <li class="pure-menu-item">
+          <a class="pure-menu-link" href="/"><i class='fa fa-home fa-fw'></i>Home</a>
+      
+        </li>
+      
+      
+        <li class="pure-menu-item">
+          <a class="pure-menu-link" href="/post/"><i class='fa fa-list fa-fw'></i>Posts</a>
+      
+        </li>
+      
+      
+        <li class="pure-menu-item">
+          <a class="pure-menu-link" href="/topics/"><i class='fa fa-folder fa-fw'></i>Topics</a>
+      
+        </li>
+      
+      
+        <li class="pure-menu-item">
+          <a class="pure-menu-link" href="/tags/"><i class='fa fa-tags fa-fw'></i>Tags</a>
+      
+        </li>
+      
+    </ul>
+  </div>
+
+  <div class="pure-menu social">
+  <ul class="pure-menu-list">
+
+    
+    <li class="pure-menu-item">
+      <a class="pure-menu-link" href="https://zxdvd.github.io/tags/docker/index.xml"><i class="fa fa-rss fa-fw"></i>RSS</a>
+    </li>
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <li class="pure-menu-item">
+      <a class="pure-menu-link" href="https://github.com/zxdvd" target="_blank"><i class="fa fa-github-square fa-fw"></i>GitHub</a>
+    </li>
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+  </ul>
+</div>
+
+
+  <div>
+  <div class="small-print">
+    <small></small>
+  </div>
+  <div class="small-print">
+    <small>Built with&nbsp;<a href="https://gohugo.io/" target="_blank">Hugo</a></small>
+    <small>Theme&nbsp;<a href="https://github.com/yoshiharuyamashita/blackburn" target="_blank">Blackburn</a></small>
+  </div>
+</div>
+
+</div>
+
+
+  <div id="main">
+
+
+<div class="header">
+  <h1>Docker</h1>
+</div>
+
+<div class="content">
+  
+    <article>
+  <header>
+    <h2><a href="https://zxdvd.github.io/post/trans/why-not-sshd-docker/">不要在container里使用sshd的n个理由</a></h2>
+
+    <div class="post-meta">
+
+  <div>
+    <i class="fa fa-calendar fa-fw"></i>
+    <time>19 Aug 2014, 00:00</time>
+  </div>
+
+  
+
+  
+
+  
+  
+  
+  <div>
+    <i class="fa fa-tags fa-fw"></i>
+    
+      <a class="post-taxonomy-tag" href="https://zxdvd.github.iotags/docker">docker</a>
+    
+  </div>
+  
+  
+
+</div>
+
+  </header>
+
+  <p>
+  <p>原文链接： <a href="http://blog.docker.com/2014/06/why-you-dont-need-to-run-sshd-in-docker">why you don&rsquo;t need to run sshd in your docker containers</a></p>
+
+<p>今天在docker官方博客上看到一篇很好的文章，很有收获，打算翻译过来。
+这篇文章讲的是不在container中使用sshd的n个理由&ndash;其实我之前很喜欢在里面开个sshd方便去check状态log之类的。</p>
+
+<p>在使用docker的时候，总是有人会问“怎么进入到container里面去呢？”，然
+后一些人就会说“开个sshd不就行了”。当你看完这篇文章之后你会发现sshd是不
+必要的，除非你需要一个ssh server的container。</p>
+
+<p>一开始大家都会禁不住去用ssh server，这看起来是最简单的方法&ndash;几乎每个
+人都用过ssh的。对于我们很多人来说，ssh是一个基本技能，对各种公私钥，
+无密码登陆，端口转发等等都很熟悉。有了这些基础，自然而然就会想通过sshd
+进入container内部了。</p>
+
+<p>现在假设你要redis server或者java webservice的docker image。考虑下下面几个问题：</p>
+
+<ul>
+<li><strong>你需要sshd来干嘛？</strong>多数情况下你可能只是需要做下备份，查看下日志，或者重启下进程、调整下配置文件，甚至用gdb、strace来调试等等。那么后面我来告诉你怎么不使用sshd来完成这些任务。</li>
+</ul>
+
+<p></p>
+  </p>
+
+  
+  <footer>
+    <a href="/post/trans/why-not-sshd-docker/">Read more<i class="fa fa-angle-double-right fa-fw"></i></a>
+  </footer>
+  
+</article>
+
+  
+</div>
+
+</div>
+</div>
+<script src="https://zxdvd.github.iojs/ui.js"></script>
+
+
+
+
+</body>
+</html>

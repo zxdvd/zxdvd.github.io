@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="">
+  <meta name="generator" content="Hugo 0.17" />
+
+  <title>zxdvd&#39;s notes</title>
+
+  
+  
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/pure/0.6.0/pure-min.css">
+
+  <!--[if lte IE 8]>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/pure/0.6.0/grids-responsive-old-ie-min.css">
+  <![endif]-->
+  <!--[if gt IE 8]><!-->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/pure/0.6.0/grids-responsive-min.css">
+  <!--<![endif]-->
+
+  <!--[if lte IE 8]>
+  <link rel="stylesheet" href="/css/side-menu-old-ie.css">
+  <![endif]-->
+  <!--[if gt IE 8]><!-->
+  <link rel="stylesheet" href="/css/side-menu.css">
+  <!--<![endif]-->
+
+  <link rel="stylesheet" href="/css/blackburn.css">
+
+  
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css">
+
+  
+  
+
+  
+  
+  <link rel="alternate" type="application/rss+xml" title="zxdvd&#39;s notes" href="https://zxdvd.github.io/index.xml" />
+  
+
+  
+
+  <link rel="shortcut icon" href="https://zxdvd.github.ioimg/favicon.ico" type="image/x-icon" />
+
+  
+  
+
+</head>
+
+
+<body>
+<div id="layout">
+
+  
+<a href="#menu" id="menuLink" class="menu-link">
+  
+  <span></span>
+</a>
+<div id="menu">
+
+  
+  <a class="pure-menu-heading brand" href="/">zxdvd</a>
+
+
+  <div class="pure-menu">
+    <ul class="pure-menu-list">
+      
+      
+        <li class="pure-menu-item">
+          <a class="pure-menu-link" href="/"><i class='fa fa-home fa-fw'></i>Home</a>
+      
+        </li>
+      
+      
+        <li class="pure-menu-item">
+          <a class="pure-menu-link" href="/post/"><i class='fa fa-list fa-fw'></i>Posts</a>
+      
+        </li>
+      
+      
+        <li class="pure-menu-item">
+          <a class="pure-menu-link" href="/topics/"><i class='fa fa-folder fa-fw'></i>Topics</a>
+      
+        </li>
+      
+      
+        <li class="pure-menu-item">
+          <a class="pure-menu-link" href="/tags/"><i class='fa fa-tags fa-fw'></i>Tags</a>
+      
+        </li>
+      
+    </ul>
+  </div>
+
+  <div class="pure-menu social">
+  <ul class="pure-menu-list">
+
+    
+    <li class="pure-menu-item">
+      <a class="pure-menu-link" href="https://zxdvd.github.io/index.xml"><i class="fa fa-rss fa-fw"></i>RSS</a>
+    </li>
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <li class="pure-menu-item">
+      <a class="pure-menu-link" href="https://github.com/zxdvd" target="_blank"><i class="fa fa-github-square fa-fw"></i>GitHub</a>
+    </li>
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+  </ul>
+</div>
+
+
+  <div>
+  <div class="small-print">
+    <small></small>
+  </div>
+  <div class="small-print">
+    <small>Built with&nbsp;<a href="https://gohugo.io/" target="_blank">Hugo</a></small>
+    <small>Theme&nbsp;<a href="https://github.com/yoshiharuyamashita/blackburn" target="_blank">Blackburn</a></small>
+  </div>
+</div>
+
+</div>
+
+
+  <div id="main">
+
+
+<div class="header">
+  <h1>zxdvd&#39;s notes</h1>
+  <h2></h2>
+</div>
+
+<div class="content">
+  
+    <article>
+  <header>
+    <h2><a href="https://zxdvd.github.io/post/read-code-redis-rio/">代码阅读: redis-rio</a></h2>
+
+    <div class="post-meta">
+
+  <div>
+    <i class="fa fa-calendar fa-fw"></i>
+    <time>20 Dec 2017, 00:00</time>
+  </div>
+
+  
+
+  
+
+  
+  
+  
+  <div>
+    <i class="fa fa-tags fa-fw"></i>
+    
+      <a class="post-taxonomy-tag" href="https://zxdvd.github.iotags/read-code">read-code</a>&nbsp;&#47;
+    
+      <a class="post-taxonomy-tag" href="https://zxdvd.github.iotags/c">c</a>&nbsp;&#47;
+    
+      <a class="post-taxonomy-tag" href="https://zxdvd.github.iotags/redis">redis</a>&nbsp;&#47;
+    
+      <a class="post-taxonomy-tag" href="https://zxdvd.github.iotags/rio">rio</a>
+    
+  </div>
+  
+  
+
+</div>
+
+  </header>
+
+  <p>
+  rio.h, rio.c是redis内部对部分io的一个封装，封装之后不管是buffer, 还是file, 还是fdset， 它们都是rio对象，有统一的write， read等函数，外部调用它们的时候不用关心 底层细节. 从这里可以学到c里面怎么来实现面向对象编程，我们会发现面向对象只是一种思想， 跟语言无关，并不需要class关键词.
+先看rio.h里rio的这个结构的定义(篇幅限制，只copy部分)
+struct _rio { size_t (*read)(struct _rio *, void *buf, size_t len); size_t (*write)(struct _rio *, const void *buf, size_t len); off_t (*tell)(struct _rio *); int (*flush)(struct _rio *); size_t processed_bytes; /* number of bytes read or written */ size_t max_processing_chunk; /* maximum single read or write chunk size */ union { struct { sds ptr; off_t pos; } buffer; struct { FILE *fp; off_t buffered; /* Bytes written since last fsync.
+  </p>
+
+  
+  <footer>
+    <a href="/post/read-code-redis-rio/">Read more<i class="fa fa-angle-double-right fa-fw"></i></a>
+  </footer>
+  
+</article>
+
+  
+    <article>
+  <header>
+    <h2><a href="https://zxdvd.github.io/post/travis-update-github-page/">配置travis自动更新github page</a></h2>
+
+    <div class="post-meta">
+
+  <div>
+    <i class="fa fa-calendar fa-fw"></i>
+    <time>05 Nov 2016, 00:00</time>
+  </div>
+
+  
+
+  
+
+  
+  
+  
+  <div>
+    <i class="fa fa-tags fa-fw"></i>
+    
+      <a class="post-taxonomy-tag" href="https://zxdvd.github.iotags/ci">ci</a>
+    
+  </div>
+  
+  
+
+</div>
+
+  </header>
+
+  <p>
+  <p>很久没有更新了，evernote里倒是攒了一堆素材，就是没整理，现在准备抽空更新了。
+之前是用pelican生成网页的，后来有次pelican更新了，把一个组件都弄到一个别的repo了，
+然后每次配置又得多clone几个repo了。正好最近学习go，hugo这种single binary感觉也不错，
+配合travis自动更新都不需要安装什么依赖的，然后就决定迁移过来了。</p>
+
+<p>travis是一个自动化的编译、打包、测试、部署平台，对开源项目免费，支持n多语言，通过自定义脚本，
+感觉就是送了一个打包测试的服务器，不知道他的盈利模式是什么用的，靠少量付费用户能撑起这么多
+开源项目的免费使用么？</p>
+
+<p>他的工作流程大致如下:</p>
+
+<pre><code>push OR pull request to a repo -&gt;
+    github notify this event to travis -&gt;
+        travis clone your code and build according the configuration.
+</code></pre>
+
+<p></p>
+  </p>
+
+  
+  <footer>
+    <a href="/post/travis-update-github-page/">Read more<i class="fa fa-angle-double-right fa-fw"></i></a>
+  </footer>
+  
+</article>
+
+  
+    <article>
+  <header>
+    <h2><a href="https://zxdvd.github.io/post/python-function-default-parameter/">python: default parameter of function</a></h2>
+
+    <div class="post-meta">
+
+  <div>
+    <i class="fa fa-calendar fa-fw"></i>
+    <time>05 Aug 2015, 00:00</time>
+  </div>
+
+  
+
+  
+
+  
+  
+  
+  <div>
+    <i class="fa fa-tags fa-fw"></i>
+    
+      <a class="post-taxonomy-tag" href="https://zxdvd.github.iotags/python">python</a>
+    
+  </div>
+  
+  
+
+</div>
+
+  </header>
+
+  <p>
+  <p>I&rsquo;ll show a small peice of code at first:</p>
+
+<pre><code>:::python
+&gt;&gt;&gt; def foo(a=[]):
+...   a.append(1)
+...   print(a)
+...
+&gt;&gt;&gt; foo()
+[1]
+&gt;&gt;&gt; foo()
+[1, 1]
+&gt;&gt;&gt; foo()
+[1, 1, 1]
+&gt;&gt;&gt; foo
+&lt;function foo at 0x7efc48708bf8&gt;
+</code></pre>
+
+<p>I was confused by this when first met it years ago. A lot of people, me
+included, may think that list <strong>a</strong> should always be <strong>[1]</strong> and why it behaviors like a
+global variable.</p>
+
+<h4 id="everything-is-an-object">Everything is an object</h4>
+
+<p>We frequently see this quote but it&rsquo;s not easy to understand.</p>
+
+<p>In python, a function is an object too. This object is created after definition.
+And the function name is just like a reference to the object. And the default
+parameter of the function is also determined at the same time.</p>
+
+<p></p>
+  </p>
+
+  
+  <footer>
+    <a href="/post/python-function-default-parameter/">Read more<i class="fa fa-angle-double-right fa-fw"></i></a>
+  </footer>
+  
+</article>
+
+  
+    <article>
+  <header>
+    <h2><a href="https://zxdvd.github.io/post/summary-curl-bugzilla/">Summary: the curl bugzilla project</a></h2>
+
+    <div class="post-meta">
+
+  <div>
+    <i class="fa fa-calendar fa-fw"></i>
+    <time>12 Dec 2014, 00:00</time>
+  </div>
+
+  
+
+  
+
+  
+  
+  
+  <div>
+    <i class="fa fa-tags fa-fw"></i>
+    
+      <a class="post-taxonomy-tag" href="https://zxdvd.github.iotags/python">python</a>
+    
+  </div>
+  
+  
+
+</div>
+
+  </header>
+
+  <p>
+  <p>I started a small project based on tornado and mongodb last week, now I&rsquo;d like
+to write a summary about it since most functions are finished.</p>
+
+<h3 id="why-start-this-project">Why start this project</h3>
+
+<ol>
+<li><p>We used bugzilla frequently but the traffic to bugzilla is very slow.</p></li>
+
+<li><p>It uses openid to login and the authentication cookies last very short.</p></li>
+
+<li><p>Too many irrelevant products.</p></li>
+</ol>
+
+<h3 id="goal-of-the-project">Goal of the project</h3>
+
+<ol>
+<li><p>Using curl to search the bugzilla easily. You can search by keywords, or email.</p></li>
+
+<li><p>Can easily get latest reported bugs of a specific product.</p></li>
+</ol>
+
+<h3 id="how-to">How to?</h3>
+
+<ol>
+<li><p>Our bugzilla enabled the xmlrpc api so it&rsquo;s very easy to fetch data using
+xmlrpcclient library. I chose to store data with mongodb.</p></li>
+
+<li><p>Wrote the web server based on tornado. Parsed the requests and queried the
+mongodb and then wrote back the data.</p></li>
+</ol>
+
+<p>Code repo:
+<a href="https://github.com/zxdvd/scripts/tree/master/bugzilla">github.com/zxdvd/scripts/tree/master/bugzilla</a></p>
+
+<p>I didn&rsquo;t use a independent repo since there isn&rsquo;t too much codes.</p>
+
+<p></p>
+  </p>
+
+  
+  <footer>
+    <a href="/post/summary-curl-bugzilla/">Read more<i class="fa fa-angle-double-right fa-fw"></i></a>
+  </footer>
+  
+</article>
+
+  
+    <article>
+  <header>
+    <h2><a href="https://zxdvd.github.io/post/multiple-routing-tables/">Linux--multiple routing tables</a></h2>
+
+    <div class="post-meta">
+
+  <div>
+    <i class="fa fa-calendar fa-fw"></i>
+    <time>30 Oct 2014, 00:00</time>
+  </div>
+
+  
+
+  
+
+  
+  
+  
+  <div>
+    <i class="fa fa-tags fa-fw"></i>
+    
+      <a class="post-taxonomy-tag" href="https://zxdvd.github.iotags/linux">linux</a>&nbsp;&#47;
+    
+      <a class="post-taxonomy-tag" href="https://zxdvd.github.iotags/network">network</a>
+    
+  </div>
+  
+  
+
+</div>
+
+  </header>
+
+  <p>
+  <p>Several months ago, my colleague got a problem that some of his virtual
+machines. I dug into this problem and finally solved it.</p>
+
+<p>Following is the network topology =</p>
+
+<p><img src="/images/post/network-topo-mult-routes.jpg" alt="network topology" /></p>
+
+<p>It has following problems =<br />
+The br2 and vnet5 and vnet6 can only communicate with subnet 192.168.2.0/24,
+they cannot send or receive packages from other subnets.</p>
+
+<p>Explanation =<br />
+Because there is only route to 192.168.2.0/24 for the br2. Let&rsquo;s try to analyze
+it through a ping process. If you ping 192.168.2.7 (br2) from a machine outside
+of this subnet, like 192.168.1.10, below is the detailed routing path =<br />
+src to dst = 192.168.1.10 checks the destination and finds it&rsquo;s in another subnet
+so send it to the default gateway.</p>
+
+<pre><code>192.168.1.10  --&gt;  to gateway 192.168.1.254   OK
+192.168.1.254 --&gt;  forward to 192.168.2.254   OK
+192.168.2.254 --&gt;  forward to 192.168.2.7     OK
+</code></pre>
+
+<p>dst to src = Also 192.168.2.7 would send to default gateway, but let&rsquo;s check the
+default gateway of the machine. It&rsquo;s <code>default via 192.168.1.254 dev br1</code>, so it
+fails to send the package since the br1 interface won&rsquo;t send a package whose
+source ip address is not bounded to itself.</p>
+
+<p>Now we knows that the br2 can receive packages but fail to send them to other
+subnets. So how to? Add another default gateway? A machine can only have one
+default gateway.</p>
+
+<p></p>
+  </p>
+
+  
+  <footer>
+    <a href="/post/multiple-routing-tables/">Read more<i class="fa fa-angle-double-right fa-fw"></i></a>
+  </footer>
+  
+</article>
+
+  
+    <article>
+  <header>
+    <h2><a href="https://zxdvd.github.io/post/trans/why-not-sshd-docker/">不要在container里使用sshd的n个理由</a></h2>
+
+    <div class="post-meta">
+
+  <div>
+    <i class="fa fa-calendar fa-fw"></i>
+    <time>19 Aug 2014, 00:00</time>
+  </div>
+
+  
+
+  
+
+  
+  
+  
+  <div>
+    <i class="fa fa-tags fa-fw"></i>
+    
+      <a class="post-taxonomy-tag" href="https://zxdvd.github.iotags/docker">docker</a>
+    
+  </div>
+  
+  
+
+</div>
+
+  </header>
+
+  <p>
+  <p>原文链接： <a href="http://blog.docker.com/2014/06/why-you-dont-need-to-run-sshd-in-docker">why you don&rsquo;t need to run sshd in your docker containers</a></p>
+
+<p>今天在docker官方博客上看到一篇很好的文章，很有收获，打算翻译过来。
+这篇文章讲的是不在container中使用sshd的n个理由&ndash;其实我之前很喜欢在里面开个sshd方便去check状态log之类的。</p>
+
+<p>在使用docker的时候，总是有人会问“怎么进入到container里面去呢？”，然
+后一些人就会说“开个sshd不就行了”。当你看完这篇文章之后你会发现sshd是不
+必要的，除非你需要一个ssh server的container。</p>
+
+<p>一开始大家都会禁不住去用ssh server，这看起来是最简单的方法&ndash;几乎每个
+人都用过ssh的。对于我们很多人来说，ssh是一个基本技能，对各种公私钥，
+无密码登陆，端口转发等等都很熟悉。有了这些基础，自然而然就会想通过sshd
+进入container内部了。</p>
+
+<p>现在假设你要redis server或者java webservice的docker image。考虑下下面几个问题：</p>
+
+<ul>
+<li><strong>你需要sshd来干嘛？</strong>多数情况下你可能只是需要做下备份，查看下日志，或者重启下进程、调整下配置文件，甚至用gdb、strace来调试等等。那么后面我来告诉你怎么不使用sshd来完成这些任务。</li>
+</ul>
+
+<p></p>
+  </p>
+
+  
+  <footer>
+    <a href="/post/trans/why-not-sshd-docker/">Read more<i class="fa fa-angle-double-right fa-fw"></i></a>
+  </footer>
+  
+</article>
+
+  
+
+  
+
+
+</div>
+
+</div>
+</div>
+<script src="https://zxdvd.github.iojs/ui.js"></script>
+
+
+
+
+</body>
+</html>
+

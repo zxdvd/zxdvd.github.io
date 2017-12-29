@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="">
+  <meta name="generator" content="Hugo 0.17" />
+
+  <title>Python &middot; zxdvd&#39;s notes</title>
+
+  
+  
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/pure/0.6.0/pure-min.css">
+
+  <!--[if lte IE 8]>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/pure/0.6.0/grids-responsive-old-ie-min.css">
+  <![endif]-->
+  <!--[if gt IE 8]><!-->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/pure/0.6.0/grids-responsive-min.css">
+  <!--<![endif]-->
+
+  <!--[if lte IE 8]>
+  <link rel="stylesheet" href="/css/side-menu-old-ie.css">
+  <![endif]-->
+  <!--[if gt IE 8]><!-->
+  <link rel="stylesheet" href="/css/side-menu.css">
+  <!--<![endif]-->
+
+  <link rel="stylesheet" href="/css/blackburn.css">
+
+  
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css">
+
+  
+  
+
+  
+  
+  <link rel="alternate" type="application/rss+xml" title="zxdvd&#39;s notes" href="https://zxdvd.github.io/tags/python/index.xml" />
+  
+
+  
+
+  <link rel="shortcut icon" href="https://zxdvd.github.ioimg/favicon.ico" type="image/x-icon" />
+
+  
+  
+
+</head>
+
+
+<body>
+<div id="layout">
+
+  
+<a href="#menu" id="menuLink" class="menu-link">
+  
+  <span></span>
+</a>
+<div id="menu">
+
+  
+  <a class="pure-menu-heading brand" href="/">zxdvd</a>
+
+
+  <div class="pure-menu">
+    <ul class="pure-menu-list">
+      
+      
+        <li class="pure-menu-item">
+          <a class="pure-menu-link" href="/"><i class='fa fa-home fa-fw'></i>Home</a>
+      
+        </li>
+      
+      
+        <li class="pure-menu-item">
+          <a class="pure-menu-link" href="/post/"><i class='fa fa-list fa-fw'></i>Posts</a>
+      
+        </li>
+      
+      
+        <li class="pure-menu-item">
+          <a class="pure-menu-link" href="/topics/"><i class='fa fa-folder fa-fw'></i>Topics</a>
+      
+        </li>
+      
+      
+        <li class="pure-menu-item">
+          <a class="pure-menu-link" href="/tags/"><i class='fa fa-tags fa-fw'></i>Tags</a>
+      
+        </li>
+      
+    </ul>
+  </div>
+
+  <div class="pure-menu social">
+  <ul class="pure-menu-list">
+
+    
+    <li class="pure-menu-item">
+      <a class="pure-menu-link" href="https://zxdvd.github.io/tags/python/index.xml"><i class="fa fa-rss fa-fw"></i>RSS</a>
+    </li>
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <li class="pure-menu-item">
+      <a class="pure-menu-link" href="https://github.com/zxdvd" target="_blank"><i class="fa fa-github-square fa-fw"></i>GitHub</a>
+    </li>
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+  </ul>
+</div>
+
+
+  <div>
+  <div class="small-print">
+    <small></small>
+  </div>
+  <div class="small-print">
+    <small>Built with&nbsp;<a href="https://gohugo.io/" target="_blank">Hugo</a></small>
+    <small>Theme&nbsp;<a href="https://github.com/yoshiharuyamashita/blackburn" target="_blank">Blackburn</a></small>
+  </div>
+</div>
+
+</div>
+
+
+  <div id="main">
+
+
+<div class="header">
+  <h1>Python</h1>
+</div>
+
+<div class="content">
+  
+    <article>
+  <header>
+    <h2><a href="https://zxdvd.github.io/post/python-function-default-parameter/">python: default parameter of function</a></h2>
+
+    <div class="post-meta">
+
+  <div>
+    <i class="fa fa-calendar fa-fw"></i>
+    <time>05 Aug 2015, 00:00</time>
+  </div>
+
+  
+
+  
+
+  
+  
+  
+  <div>
+    <i class="fa fa-tags fa-fw"></i>
+    
+      <a class="post-taxonomy-tag" href="https://zxdvd.github.iotags/python">python</a>
+    
+  </div>
+  
+  
+
+</div>
+
+  </header>
+
+  <p>
+  <p>I&rsquo;ll show a small peice of code at first:</p>
+
+<pre><code>:::python
+&gt;&gt;&gt; def foo(a=[]):
+...   a.append(1)
+...   print(a)
+...
+&gt;&gt;&gt; foo()
+[1]
+&gt;&gt;&gt; foo()
+[1, 1]
+&gt;&gt;&gt; foo()
+[1, 1, 1]
+&gt;&gt;&gt; foo
+&lt;function foo at 0x7efc48708bf8&gt;
+</code></pre>
+
+<p>I was confused by this when first met it years ago. A lot of people, me
+included, may think that list <strong>a</strong> should always be <strong>[1]</strong> and why it behaviors like a
+global variable.</p>
+
+<h4 id="everything-is-an-object">Everything is an object</h4>
+
+<p>We frequently see this quote but it&rsquo;s not easy to understand.</p>
+
+<p>In python, a function is an object too. This object is created after definition.
+And the function name is just like a reference to the object. And the default
+parameter of the function is also determined at the same time.</p>
+
+<p></p>
+  </p>
+
+  
+  <footer>
+    <a href="/post/python-function-default-parameter/">Read more<i class="fa fa-angle-double-right fa-fw"></i></a>
+  </footer>
+  
+</article>
+
+  
+    <article>
+  <header>
+    <h2><a href="https://zxdvd.github.io/post/summary-curl-bugzilla/">Summary: the curl bugzilla project</a></h2>
+
+    <div class="post-meta">
+
+  <div>
+    <i class="fa fa-calendar fa-fw"></i>
+    <time>12 Dec 2014, 00:00</time>
+  </div>
+
+  
+
+  
+
+  
+  
+  
+  <div>
+    <i class="fa fa-tags fa-fw"></i>
+    
+      <a class="post-taxonomy-tag" href="https://zxdvd.github.iotags/python">python</a>
+    
+  </div>
+  
+  
+
+</div>
+
+  </header>
+
+  <p>
+  <p>I started a small project based on tornado and mongodb last week, now I&rsquo;d like
+to write a summary about it since most functions are finished.</p>
+
+<h3 id="why-start-this-project">Why start this project</h3>
+
+<ol>
+<li><p>We used bugzilla frequently but the traffic to bugzilla is very slow.</p></li>
+
+<li><p>It uses openid to login and the authentication cookies last very short.</p></li>
+
+<li><p>Too many irrelevant products.</p></li>
+</ol>
+
+<h3 id="goal-of-the-project">Goal of the project</h3>
+
+<ol>
+<li><p>Using curl to search the bugzilla easily. You can search by keywords, or email.</p></li>
+
+<li><p>Can easily get latest reported bugs of a specific product.</p></li>
+</ol>
+
+<h3 id="how-to">How to?</h3>
+
+<ol>
+<li><p>Our bugzilla enabled the xmlrpc api so it&rsquo;s very easy to fetch data using
+xmlrpcclient library. I chose to store data with mongodb.</p></li>
+
+<li><p>Wrote the web server based on tornado. Parsed the requests and queried the
+mongodb and then wrote back the data.</p></li>
+</ol>
+
+<p>Code repo:
+<a href="https://github.com/zxdvd/scripts/tree/master/bugzilla">github.com/zxdvd/scripts/tree/master/bugzilla</a></p>
+
+<p>I didn&rsquo;t use a independent repo since there isn&rsquo;t too much codes.</p>
+
+<p></p>
+  </p>
+
+  
+  <footer>
+    <a href="/post/summary-curl-bugzilla/">Read more<i class="fa fa-angle-double-right fa-fw"></i></a>
+  </footer>
+  
+</article>
+
+  
+</div>
+
+</div>
+</div>
+<script src="https://zxdvd.github.iojs/ui.js"></script>
+
+
+
+
+</body>
+</html>

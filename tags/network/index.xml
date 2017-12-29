@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>zxdvd&#39;s notes</title>
+    <link>https://zxdvd.github.io/tags/network/index.xml</link>
+    <description>Recent content on zxdvd&#39;s notes</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <atom:link href="https://zxdvd.github.io/tags/network/index.xml" rel="self" type="application/rss+xml" />
+    
+    <item>
+      <title>Linux--multiple routing tables</title>
+      <link>https://zxdvd.github.io/post/multiple-routing-tables/</link>
+      <pubDate>Thu, 30 Oct 2014 00:00:00 +0000</pubDate>
+      
+      <guid>https://zxdvd.github.io/post/multiple-routing-tables/</guid>
+      <description>&lt;p&gt;Several months ago, my colleague got a problem that some of his virtual
+machines. I dug into this problem and finally solved it.&lt;/p&gt;
+
+&lt;p&gt;Following is the network topology =&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&#34;https://zxdvd.github.io/images/post/network-topo-mult-routes.jpg&#34; alt=&#34;network topology&#34; /&gt;&lt;/p&gt;
+
+&lt;p&gt;It has following problems =&lt;br /&gt;
+The br2 and vnet5 and vnet6 can only communicate with subnet 192.168.2.0/24,
+they cannot send or receive packages from other subnets.&lt;/p&gt;
+
+&lt;p&gt;Explanation =&lt;br /&gt;
+Because there is only route to 192.168.2.0/24 for the br2. Let&amp;rsquo;s try to analyze
+it through a ping process. If you ping 192.168.2.7 (br2) from a machine outside
+of this subnet, like 192.168.1.10, below is the detailed routing path =&lt;br /&gt;
+src to dst = 192.168.1.10 checks the destination and finds it&amp;rsquo;s in another subnet
+so send it to the default gateway.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;192.168.1.10  --&amp;gt;  to gateway 192.168.1.254   OK
+192.168.1.254 --&amp;gt;  forward to 192.168.2.254   OK
+192.168.2.254 --&amp;gt;  forward to 192.168.2.7     OK
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;dst to src = Also 192.168.2.7 would send to default gateway, but let&amp;rsquo;s check the
+default gateway of the machine. It&amp;rsquo;s &lt;code&gt;default via 192.168.1.254 dev br1&lt;/code&gt;, so it
+fails to send the package since the br1 interface won&amp;rsquo;t send a package whose
+source ip address is not bounded to itself.&lt;/p&gt;
+
+&lt;p&gt;Now we knows that the br2 can receive packages but fail to send them to other
+subnets. So how to? Add another default gateway? A machine can only have one
+default gateway.&lt;/p&gt;
+
+&lt;p&gt;&lt;/p&gt;
+
+&lt;h3 id=&#34;routing-tables&#34;&gt;Routing tables&lt;/h3&gt;
+
+&lt;p&gt;It&amp;rsquo;s time to get something about the routing tables. For the linux, you can have
+routing tables for 0 to 255. And you can set rules of each table, e.g. let the
+br1 follows the table 10 and the br2 follows the table 20, with this, our
+problem could be tackled perfectly.&lt;/p&gt;
+
+&lt;p&gt;All routing tables are listed in file &lt;code&gt;/etc/iproute2/rt_tables&lt;/code&gt;, you can see
+tables local, main, default there, main is the default table when you do all
+kinds of add/delete.&lt;br /&gt;
+To check items in a table, using &lt;code&gt;#ip route show table TABLE-ID-or-TABLE-NAME&lt;/code&gt;&lt;/p&gt;
+
+&lt;h3 id=&#34;setup-multiple-routing-tables&#34;&gt;Setup multiple routing tables&lt;/h3&gt;
+
+&lt;p&gt;From above we know, to solve this problem we need to set up  routing tables for
+both br1 and br2. We can set the br1 to use the main table by default then we
+could only set up another one for the br2.&lt;/p&gt;
+
+&lt;ol&gt;
+&lt;li&gt;&lt;p&gt;&lt;code&gt;#echo 10 table_br2 &amp;gt;&amp;gt; /etc/iproute2/rt_tables&lt;/code&gt; to add a table.&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;&lt;code&gt;#ip route add 192.168.2.0/24 dev br2 src 192.168.2.7 table table_br2&lt;/code&gt;&lt;br /&gt;
+&lt;code&gt;#ip route default via 192.168.2.254 dev br2 table table_br2&lt;/code&gt;&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;After setting up this table, we need to rules to let the packages to know
+which table to select.&lt;br /&gt;
+&lt;code&gt;#ip rule add from 192.168.2.7 table table_br2&lt;/code&gt;&lt;br /&gt;
+This rule tells all packages whose source address is 192.168.2.7 to follow
+the table_br2.&lt;br /&gt;
+&lt;code&gt;#ip rule add oif br2 table table_br2    //oif=output interface&lt;/code&gt;&lt;/p&gt;&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;Now all the settings are finished. But remember that =&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;All the &lt;code&gt;ip XXX&lt;/code&gt; settings are temporary&lt;/strong&gt; which mean that they&amp;rsquo;ll get lost
+   after rebooting. If you want to keep them permanent, you can write them to
+   &amp;ldquo;/etc/init.d/boot.local&amp;rdquo; or use other scripts.&lt;/p&gt;
+
+&lt;h4 id=&#34;references&#34;&gt;References&lt;/h4&gt;
+
+&lt;ol&gt;
+&lt;li&gt;&lt;p&gt;&lt;a href=&#34;http =//linux-ip.net/html/routing-tables.html&#34;&gt;routing tables&lt;/a&gt;&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;&lt;a href=&#34;http =//lartc.org/howto/lartc.rpdb.multiple-links.html&#34;&gt;routing&amp;ndash;multiple uplinks&lt;/a&gt;&lt;/p&gt;&lt;/li&gt;
+&lt;/ol&gt;</description>
+    </item>
+    
+  </channel>
+</rss>
